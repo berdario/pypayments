@@ -1,0 +1,9 @@
+fake-factory==0.5.3
+falcon==0.3.0
+hug==1.9.9
+py==1.4.31
+pytest==2.8.7
+python-mimeparse==1.5.1
+six==1.10.0
+SQLAlchemy==1.0.12
+wheel==0.26.0
