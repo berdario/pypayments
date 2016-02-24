@@ -15,21 +15,21 @@ def connection():
 def test_successful_payment(connection):
     pay(source=1, recipient=2, amount=30, connection=connection)
     accts = all_accounts()
-    assert accts[1].balance == 170
-    assert accts[2].balance == 230
+    assert accts[1]['balance'] == 170
+    assert accts[2]['balance'] == 230
 
 def test_successful_payment2(connection):
     """This test verifies that tests changes are properly rollbacked"""
     accts = all_accounts()
-    assert accts[1].balance == 200
+    assert accts[1]['balance'] == 200
     pay(1, 2, 30, connection)
     accts = all_accounts()
-    assert accts[1].balance == 170
-    assert accts[2].balance == 230
+    assert accts[1]['balance'] == 170
+    assert accts[2]['balance'] == 230
     
 def test_balance_can_go_to_zero(connection):
     pay(1, 2, 200, connection)
-    assert all_accounts()[1].balance == 0
+    assert all_accounts()[1]['balance'] == 0
     
 def test_transaction_log(connection):
     pay(1, 2, 30, connection)

@@ -10,7 +10,7 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.close()
 
-sqlite = sql.create_engine('sqlite:///:memory:', echo=True)
+sqlite = sql.create_engine('sqlite:///:memory:')
 
 meta = sql.MetaData()
 accounts = sql.Table('account', meta,
@@ -36,15 +36,27 @@ accounts.insert().execute([{'balance': 200,
                             'name': fake.user_name(),
                             'email': fake.email()} for _ in range(25)])
 
-
 @hug.get('/')
 def main():
-    return {accnt.id: accnt for accnt in accounts.select().execute()}
+    def to_dict(result):
+        d = dict(result)
+        del d['id']
+        d['balance'] = float(d['balance'])
+        return d
+
+    return {accnt.id: to_dict(accnt) for accnt in accounts.select().execute()}
 
 @hug.get('/account')
 def account(account_id: int):
-    return list(transactions.select().where((transactions.c.source_id == account_id) | 
-                                            (transactions.c.recipient_id == account_id)).execute())
+    def to_dict(result):
+        d = dict(result)
+        del d['id']
+        d['amount'] = float(d['amount'])
+        return d
+
+    acct_transactions = transactions.select().where((transactions.c.source_id == account_id) | 
+                                            (transactions.c.recipient_id == account_id))
+    return [to_dict(tsct) for tsct in acct_transactions.execute()]
 
     
 def update_balance(account_id: int, delta: int):
@@ -59,7 +71,7 @@ def pay(source: int, recipient: int, amount: Decimal, connection=None):
         connection.execute(update_balance(source, -amount))
         connection.execute(update_balance(recipient, +amount))
         # inserting into transactions is not only needed for /account
-        # but it also checks the id validity and a positive amount
+        # but it also checks the id validity and for the amount to be positive
         connection.execute(transactions.insert().values(source_id=source,
                                                          recipient_id=recipient,
                                                          amount=amount))
