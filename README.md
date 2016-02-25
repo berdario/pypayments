@@ -26,3 +26,10 @@ This will return all the transactions involving a single account
     http://localhost:8000/pay?source=1&recipient=2&amount=1
     
 This will make a payment, while respecting the constraints (source and recipient have to exist, no negative balance)
+
+
+By accessing `http://localhost:8000/index` the Elm frontend can be used to interact with the api
+
+To rebuild `index.html` simply run
+
+    elm-make Main.elm
