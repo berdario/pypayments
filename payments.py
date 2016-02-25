@@ -35,6 +35,11 @@ fake = Faker()
 accounts.insert().execute([{'balance': 200,
                             'name': fake.user_name(),
                             'email': fake.email()} for _ in range(25)])
+                            
+
+@hug.get('/index', output=hug.output_format.file)
+def index():
+    return 'index.html'
 
 @hug.get('/')
 def main():
@@ -45,6 +50,7 @@ def main():
         return d
 
     return {accnt.id: to_dict(accnt) for accnt in accounts.select().execute()}
+
 
 @hug.get('/account')
 def account(account_id: int):
