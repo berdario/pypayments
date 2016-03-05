@@ -2,47 +2,34 @@ from decimal import Decimal
 
 import hug
 
-from model import sqlite, accounts, transactions, update_balance                          
+from model import get_all_accounts, get_account_transactions, record_payment_transaction                         
 
 @hug.get('/', output=hug.output_format.file)
 def index():
     return 'index.html'
 
 @hug.get('/accounts')
-def main(connection=None):
-    connection = connection or sqlite.connect()
+def main():
     def to_dict(result):
         d = dict(result)
         del d['id']
         d['balance'] = float(d['balance'])
         return d
 
-    return {accnt.id: to_dict(accnt) for accnt in connection.execute(accounts.select())}
-
+    return {accnt.id: to_dict(accnt) for accnt in get_all_accounts()}
 
 @hug.get('/transactions')
-def account_transactions(account_id: int, connection=None):
-    connection = connection or sqlite.connect()
+def account_transactions(account_id: int):
     def to_dict(result):
         d = dict(result)
         del d['id']
         d['amount'] = float(d['amount'])
         return d
-
-    acct_transactions = transactions.select().where((transactions.c.source_id == account_id) | 
-                                            (transactions.c.recipient_id == account_id))
-    return [to_dict(tsct) for tsct in connection.execute(acct_transactions)]
+        
+    return [to_dict(tsct) for tsct in get_account_transactions(account_id)]
 
 
 @hug.post('/pay')
-def pay(source: int, recipient: int, amount: Decimal, connection=None):
-    connection = connection or sqlite.connect()
-    with connection.begin():
-        connection.execute(update_balance(source, -amount))
-        connection.execute(update_balance(recipient, +amount))
-        # inserting into transactions is not only needed for /account
-        # but it also checks the id validity and for the amount to be positive
-        connection.execute(transactions.insert().values(source_id=source,
-                                                         recipient_id=recipient,
-                                                         amount=amount))
+def pay(source: int, recipient: int, amount: Decimal):
+    record_payment_transaction(source, recipient, amount)
 
