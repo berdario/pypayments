@@ -13,14 +13,14 @@ view : Signal.Address Action -> Model -> Html
 view address model = body []
     [navbar address model
     ,case model.currentPage of
-        Transactions -> viewTransactions address model
+        Accounts -> viewAccounts address model
         Pay -> viewPaymentForm address model]
     
 
 navbar : Signal.Address Action -> Model -> Html
 navbar address model = nav []
     [ul []
-        [li [onClick address (SetActivePage Transactions)] [text "Transactions"]
+        [li [onClick address (SetActivePage Accounts)] [text "Transactions"]
         ,li [onClick address (SetActivePage Pay)] [text "Make a payment"]]]
 
 transactionToDiv t = div []
@@ -49,8 +49,8 @@ accountDataToHtml address mAccount mTransactions (id, acct) =
     _ -> accountDiv address id [accountText]
     
     
-viewTransactions : Signal.Address Action -> Model -> Html
-viewTransactions address model = div []
+viewAccounts : Signal.Address Action -> Model -> Html
+viewAccounts address model = div []
     (List.map (accountDataToHtml address model.inspectedAccount model.accountTransactions) (Dict.toList model.accounts))
 
 targetInt = Json.customDecoder targetValue String.toInt

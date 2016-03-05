@@ -22,7 +22,7 @@ app =
 
 init : (Model, Effects Action)
 init =
-  ( Model Dict.empty Nothing Nothing {source=0, recipient=0, amount=0} Transactions Nothing
+  ( Model Dict.empty Nothing Nothing {source=0, recipient=0, amount=0} Accounts Nothing
   , accounts)
 
 

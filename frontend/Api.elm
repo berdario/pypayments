@@ -50,7 +50,7 @@ baseUrl = "http://localhost:8000"
 
 accountsUrl = Http.url (baseUrl ++ "/accounts") []
 
-accountUrl id = Http.url (baseUrl ++ "/transactions") [("account_id", toString id)]
+transactionsUrl id = Http.url (baseUrl ++ "/transactions") [("account_id", toString id)]
 
 payUrl source dest amount = Http.url (baseUrl ++ "/pay")
     [("source", toString source)
@@ -64,8 +64,8 @@ accounts = Http.get decodeAccounts accountsUrl
     |> Effects.task
 
 
-accountTransactions id =
-    Http.get decodeTransactions (accountUrl id)
+accountTransactions account_id =
+    Http.get decodeTransactions (transactionsUrl account_id)
     |> Task.toMaybe
     |> Task.map FetchedTransactions
     |> Effects.task

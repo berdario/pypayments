@@ -2,7 +2,7 @@ module Model where
 
 import Dict exposing (Dict)
 
-type Page = Transactions | Pay
+type Page = Accounts | Pay
 type TransactionOutcome = Success | Fail
 type alias AccountId = Int
 type alias Account = {name: String, email: String, balance: Float}
