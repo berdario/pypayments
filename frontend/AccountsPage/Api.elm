@@ -1,4 +1,4 @@
-module Api where
+module AccountsPage.Api where
 
 import Dict exposing (Dict)
 import Effects exposing (Effects)
@@ -7,7 +7,9 @@ import Json.Decode as Json exposing ((:=))
 import String
 import Task
 
-import Model exposing (..)
+import AccountsPage.Model exposing (..)
+import Common exposing (..)
+
 
 
 keyToInt : (String, a) -> Result String (Int, a)
@@ -45,18 +47,6 @@ decodeTransaction = Json.object3 Transaction
 decodeTransactions : Json.Decoder (List Transaction)
 decodeTransactions = Json.list decodeTransaction
 
-
-baseUrl = "http://localhost:8000" 
-
-accountsUrl = Http.url (baseUrl ++ "/accounts") []
-
-transactionsUrl id = Http.url (baseUrl ++ "/transactions") [("account_id", toString id)]
-
-payUrl source dest amount = Http.url (baseUrl ++ "/pay")
-    [("source", toString source)
-    ,("recipient", toString dest)
-    ,("amount", toString amount)]
-
     
 accounts = Http.get decodeAccounts accountsUrl
     |> Task.toMaybe
@@ -68,10 +58,4 @@ accountTransactions account_id =
     Http.get decodeTransactions (transactionsUrl account_id)
     |> Task.toMaybe
     |> Task.map FetchedTransactions
-    |> Effects.task
-
-pay {source, recipient, amount} =
-    Http.post Json.value (payUrl source recipient amount) Http.empty
-    |> Task.map (\_ -> LastTransactionOutcome Success)
-    |> flip Task.onError (\_ -> Task.succeed (LastTransactionOutcome Fail))
     |> Effects.task

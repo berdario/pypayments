@@ -1,14 +1,16 @@
 module Main where
 
-import Dict exposing (Dict)
 import Effects exposing (Effects, Never)
 import StartApp
 import Task
 
 import Model exposing (..)
 import View exposing (view)
-import Api exposing (accounts)
 import Update exposing (update)
+
+import AccountsPage.Model as Accounts
+import PaymentPage.Model as Payment
+import AccountsPage.Api exposing (accounts)
 
 
 app =
@@ -22,8 +24,8 @@ app =
 
 init : (Model, Effects Action)
 init =
-  ( Model Dict.empty Nothing Nothing {source=0, recipient=0, amount=0} Accounts Nothing
-  , accounts)
+  ( Model Accounts Payment.init Accounts.init
+  , Effects.map AccountsAction accounts)
 
 
 main =
