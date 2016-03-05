@@ -3,7 +3,8 @@ from unittest.mock import patch, call, MagicMock, ANY
 from pytest import yield_fixture, raises
 from sqlalchemy.exc import IntegrityError
 
-from payments import main as all_accounts, account_transactions
+import payments
+from payments import main as all_accounts, account_transactions, pay as do_payment
 import model
 
 # in these tests we rely on the builtin 25 fake users created in the payments module
@@ -62,38 +63,16 @@ def test_negative_amount(connection):
         
         
 def test_all_accounts():
-    with patch.object(model, 'accounts') as accounts:
-        model.get_all_accounts()
-    assert accounts.mock_calls[:1] == [call.select()]
+    with patch.object(payments, 'get_all_accounts') as mocked_model:
+        all_accounts()
+    assert mocked_model.call_args == ()
                                        
 def test_account_transactions():
-    with patch.object(model, 'transactions') as transactions:
-        model.get_account_transactions(2)
-    assert transactions.mock_calls[3] == call.select().where(ANY)
-                                            
-def test_pay():
-    m = MagicMock()
-    pay(1, 2, 30, connection=m)
-    queries = [str(c[1][0]) for c in m.execute.mock_calls]
-    assert queries == ['UPDATE account SET balance=(SELECT account.balance + ? AS anon_1 \n'
-                       'FROM account \n'
-                       'WHERE account.id = ?) WHERE account.id = ?',
-                       'UPDATE account SET balance=(SELECT account.balance + ? AS anon_1 \n'
-                       'FROM account \n'
-                       'WHERE account.id = ?) WHERE account.id = ?',
-                       'INSERT INTO transactions (source_id, recipient_id, amount) VALUES (?, ?, ?)']
+    with patch.object(payments, 'get_account_transactions') as mocked_model:
+        account_transactions(2)
+    assert mocked_model.call_args == call(2)
 
-def test_all_accounts_query():
-    m = MagicMock()
-    model.get_all_accounts(connection=m)
-    query = str(m.execute.mock_calls[0][1][0])
-    assert query == ('SELECT account.id, account.name, account.email, account.balance \n'
-                     'FROM account')
-    
-def test_account_transactions_query():
-    m = MagicMock()
-    model.get_account_transactions(2, connection=m)
-    query = str(m.execute.mock_calls[0][1][0])
-    assert query == ('SELECT transactions.id, transactions.source_id, transactions.recipient_id, transactions.amount \n' 
-                     'FROM transactions \n'
-                     'WHERE transactions.source_id = ? OR transactions.recipient_id = ?')
+def test_pay():
+    with patch.object(payments, 'record_payment_transaction') as mocked_model:
+        do_payment(1, 2, 30)
+    assert mocked_model.call_args == call(1, 2, 30)
