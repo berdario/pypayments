@@ -42,18 +42,20 @@ def index():
     return 'index.html'
 
 @hug.get('/accounts')
-def main():
+def main(connection=None):
+    connection = connection or sqlite.connect()
     def to_dict(result):
         d = dict(result)
         del d['id']
         d['balance'] = float(d['balance'])
         return d
 
-    return {accnt.id: to_dict(accnt) for accnt in accounts.select().execute()}
+    return {accnt.id: to_dict(accnt) for accnt in connection.execute(accounts.select())}
 
 
 @hug.get('/transactions')
-def account_transactions(account_id: int):
+def account_transactions(account_id: int, connection=None):
+    connection = connection or sqlite.connect()
     def to_dict(result):
         d = dict(result)
         del d['id']
@@ -62,7 +64,7 @@ def account_transactions(account_id: int):
 
     acct_transactions = transactions.select().where((transactions.c.source_id == account_id) | 
                                             (transactions.c.recipient_id == account_id))
-    return [to_dict(tsct) for tsct in acct_transactions.execute()]
+    return [to_dict(tsct) for tsct in connection.execute(acct_transactions)]
 
     
 def update_balance(account_id: int, delta: int):

@@ -62,14 +62,12 @@ def test_negative_amount(connection):
 def test_all_accounts():
     with patch.object(payments, 'accounts') as accounts:
         all_accounts()
-    assert accounts.mock_calls[:2] == [call.select(),
-                                       call.select().execute()]
+    assert accounts.mock_calls[:1] == [call.select()]
                                        
 def test_account_transactions():
     with patch.object(payments, 'transactions') as transactions:
         account_transactions(2)
-    assert transactions.mock_calls[3:5] == [call.select().where(ANY),
-                                            call.select().where(ANY).execute()]
+    assert transactions.mock_calls[3] == call.select().where(ANY)
                                             
 def test_pay():
     m = MagicMock()
@@ -82,3 +80,18 @@ def test_pay():
                        'FROM account \n'
                        'WHERE account.id = ?) WHERE account.id = ?',
                        'INSERT INTO transactions (source_id, recipient_id, amount) VALUES (?, ?, ?)']
+
+def test_all_accounts_query():
+    m = MagicMock()
+    all_accounts(connection=m)
+    query = str(m.execute.mock_calls[0][1][0])
+    assert query == ('SELECT account.id, account.name, account.email, account.balance \n'
+                     'FROM account')
+    
+def test_account_transactions_query():
+    m = MagicMock()
+    account_transactions(2, connection=m)
+    query = str(m.execute.mock_calls[0][1][0])
+    assert query == ('SELECT transactions.id, transactions.source_id, transactions.recipient_id, transactions.amount \n' 
+                     'FROM transactions \n'
+                     'WHERE transactions.source_id = ? OR transactions.recipient_id = ?')
