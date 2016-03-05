@@ -48,9 +48,9 @@ decodeTransactions = Json.list decodeTransaction
 
 baseUrl = "http://localhost:8000" 
 
-accountsUrl = Http.url baseUrl []
+accountsUrl = Http.url (baseUrl ++ "/accounts") []
 
-accountUrl id = Http.url (baseUrl ++ "/account") [("account_id", toString id)]
+accountUrl id = Http.url (baseUrl ++ "/transactions") [("account_id", toString id)]
 
 payUrl source dest amount = Http.url (baseUrl ++ "/pay")
     [("source", toString source)

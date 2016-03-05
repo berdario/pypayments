@@ -15,11 +15,11 @@ Run the server:
     
 There're 3 api endpoints:
     
-    http://localhost:8000/
+    http://localhost:8000/accounts
     
 This will return all the accounts (with their name, email, balance)
     
-    http://localhost:8000/account?account_id=2
+    http://localhost:8000/transactions?account_id=2
     
 This will return all the transactions involving a single account    
     

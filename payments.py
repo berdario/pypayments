@@ -37,11 +37,11 @@ accounts.insert().execute([{'balance': 200,
                             'email': fake.email()} for _ in range(25)])
                             
 
-@hug.get('/index', output=hug.output_format.file)
+@hug.get('/', output=hug.output_format.file)
 def index():
     return 'index.html'
 
-@hug.get('/')
+@hug.get('/accounts')
 def main():
     def to_dict(result):
         d = dict(result)
@@ -52,8 +52,8 @@ def main():
     return {accnt.id: to_dict(accnt) for accnt in accounts.select().execute()}
 
 
-@hug.get('/account')
-def account(account_id: int):
+@hug.get('/transactions')
+def account_transactions(account_id: int):
     def to_dict(result):
         d = dict(result)
         del d['id']

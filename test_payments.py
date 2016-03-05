@@ -1,7 +1,7 @@
 from pytest import yield_fixture, raises
 from sqlalchemy.exc import IntegrityError
 
-from payments import sqlite, main as all_accounts, account, pay
+from payments import sqlite, main as all_accounts, account_transactions, pay
 
 # in these tests we rely on the builtin 25 fake users created in the payments module
 
@@ -34,7 +34,7 @@ def test_balance_can_go_to_zero(connection):
 def test_transaction_log(connection):
     pay(1, 2, 30, connection)
     pay(2, 3, 30, connection)
-    assert len(account(2)) == 2
+    assert len(account_transactions(2)) == 2
     
 def test_give_back_money(connection):
     before = all_accounts()
