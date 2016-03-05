@@ -32,4 +32,4 @@ By accessing `http://localhost:8000/index` the Elm frontend can be used to inter
 
 To rebuild `index.html` simply run
 
-    elm-make Main.elm
+    elm-make frontend/Main.elm
