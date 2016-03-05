@@ -1,25 +1,10 @@
 module Update where
 
-import Dict exposing (Dict)
-import Effects exposing (Effects, Never)
-import Http
-import Json.Decode as Json exposing ((:=))
+import Effects exposing (Effects)
 import Task
 
 import Model exposing (..)
-import Api exposing (decodeAccounts, decodeTransactions, accountUrl, accountsUrl, payUrl)
-
-type Action
-    = SetActivePage Page
-    | SetSource AccountId
-    | SetRecipient AccountId
-    | SetAmount Float
-    | DoPayment
-    | ToggleShowTransactions AccountId
-    | LastTransactionOutcome Bool
-    | ClearLastTransactionOutcome
-    | FetchedAccounts (Maybe (Dict AccountId Account))
-    | FetchedTransactions (Maybe (List Transaction))
+import Api exposing (accounts, accountTransactions, pay)
 
     
 updatePage : Page -> Model -> (Model, Effects Action)
@@ -52,29 +37,10 @@ update action model =
                           in ({model | newTransaction={trans|amount=amount}}, Effects.none)
     DoPayment -> (model, pay model.newTransaction)
     (ToggleShowTransactions id) -> toggleInspection id model
-    (LastTransactionOutcome flag) -> ({model| lastTransaction=Just flag}, delayedClear)
+    (LastTransactionOutcome outcome) -> ({model| lastTransaction=Just outcome}, delayedClear)
     ClearLastTransactionOutcome -> ({model| lastTransaction=Nothing}, Effects.none)
     (FetchedAccounts Nothing) -> (model, Effects.none)
     (FetchedTransactions Nothing) -> (model, Effects.none)
     (FetchedAccounts (Just accts)) -> ({model|accounts=accts}, Effects.none)
     (FetchedTransactions (Just trans)) -> ({model|accountTransactions=Just trans}, Effects.none)
 
-
-accounts = Http.get decodeAccounts accountsUrl
-    |> Task.toMaybe
-    |> Task.map FetchedAccounts
-    |> Effects.task
-
-
-accountTransactions id =
-    Http.get decodeTransactions (accountUrl id)
-    |> Task.toMaybe
-    |> Task.map FetchedTransactions
-    |> Effects.task
-
-pay' source dest amount = Http.post Json.value (payUrl source dest amount) Http.empty
-pay {source, recipient, amount} =
-    pay' source recipient amount
-    |> Task.map (\_ -> LastTransactionOutcome True)
-    |> flip Task.onError (\_ -> Task.succeed (LastTransactionOutcome False))
-    |> Effects.task

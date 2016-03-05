@@ -1,7 +1,7 @@
 module Api where
 
 import Dict exposing (Dict)
-import Effects exposing (Effects, Never)
+import Effects exposing (Effects)
 import Http
 import Json.Decode as Json exposing ((:=))
 import String
@@ -58,3 +58,20 @@ payUrl source dest amount = Http.url (baseUrl ++ "/pay")
     ,("amount", toString amount)]
 
     
+accounts = Http.get decodeAccounts accountsUrl
+    |> Task.toMaybe
+    |> Task.map FetchedAccounts
+    |> Effects.task
+
+
+accountTransactions id =
+    Http.get decodeTransactions (accountUrl id)
+    |> Task.toMaybe
+    |> Task.map FetchedTransactions
+    |> Effects.task
+
+pay {source, recipient, amount} =
+    Http.post Json.value (payUrl source recipient amount) Http.empty
+    |> Task.map (\_ -> LastTransactionOutcome Success)
+    |> flip Task.onError (\_ -> Task.succeed (LastTransactionOutcome Fail))
+    |> Effects.task

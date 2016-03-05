@@ -1,18 +1,14 @@
 module Main where
-import Effects exposing (Effects, Never)
-import Dict exposing (Dict)
-import Http
-import Html
-import Html.Events
-import Html.Attributes
 
+import Dict exposing (Dict)
+import Effects exposing (Effects, Never)
 import StartApp
-import String
 import Task
 
 import Model exposing (..)
 import View exposing (view)
-import Update exposing (Action(..), update, accounts)
+import Api exposing (accounts)
+import Update exposing (update)
 
 
 app =
