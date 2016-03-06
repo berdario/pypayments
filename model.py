@@ -3,6 +3,8 @@ from decimal import Decimal
 from faker import Faker
 import sqlalchemy as sql
 
+IntegrityError = sql.exc.IntegrityError
+
 @sql.event.listens_for(sql.engine.Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor = dbapi_connection.cursor()

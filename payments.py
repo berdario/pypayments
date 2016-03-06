@@ -1,8 +1,9 @@
 from decimal import Decimal
 
 import hug
+from falcon import HTTP_400
 
-from model import get_all_accounts, get_account_transactions, record_payment_transaction                         
+from model import get_all_accounts, get_account_transactions, record_payment_transaction, IntegrityError
 
 @hug.get('/', output=hug.output_format.file)
 def index():
@@ -30,6 +31,9 @@ def account_transactions(account_id: int):
 
 
 @hug.post('/pay')
-def pay(source: int, recipient: int, amount: Decimal):
-    record_payment_transaction(source, recipient, amount)
+def pay(source: int, recipient: int, amount: Decimal, response=None):
+    try:
+        record_payment_transaction(source, recipient, amount)
+    except IntegrityError:
+        response.status = HTTP_400
 

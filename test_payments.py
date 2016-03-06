@@ -1,11 +1,11 @@
 from unittest.mock import patch, call, MagicMock, ANY
 
 from pytest import yield_fixture, raises
-from sqlalchemy.exc import IntegrityError
 
 import payments
 from payments import main as all_accounts, account_transactions, pay as do_payment
 import model
+from model import IntegrityError
 
 # in these tests we rely on the builtin 25 fake users created in the payments module
 

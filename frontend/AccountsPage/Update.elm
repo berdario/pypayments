@@ -22,6 +22,6 @@ update action model =
     (ToggleShowTransactions id) -> toggleInspection id model
     (FetchedAccounts Nothing) -> (model, Effects.none)
     (FetchedTransactions Nothing) -> (model, Effects.none)
-    (FetchedAccounts (Just accts)) -> ({model|accounts=accts}, Effects.none)
-    (FetchedTransactions (Just trans)) -> ({model|accountTransactions=Just trans}, Effects.none)
+    (FetchedAccounts (Just accts)) -> ({model | accounts=accts}, Effects.none)
+    (FetchedTransactions (Just trans)) -> ({model | accountTransactions=Just trans}, Effects.none)
 
