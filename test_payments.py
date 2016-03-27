@@ -1,21 +1,23 @@
+from functools import partial
 from unittest.mock import patch, call, MagicMock, ANY
 
 from pytest import yield_fixture, raises
 
 import payments
 from payments import main as all_accounts, account_transactions, pay as do_payment
-import model
-from model import IntegrityError
+from model import db, record_payment_transaction as pay, IntegrityError
 
 # in these tests we rely on the builtin 25 fake users created in the payments module
 
-pay = model.record_payment_transaction
-
 @yield_fixture
 def connection():
-    conn = model.sqlite.connect()
+    conn = db.connect()
     with conn.begin() as transaction:
-        yield conn
+        patched_all_accounts = partial(payments.get_all_accounts, conn)
+        patched_account_transactions = partial(payments.get_account_transactions, connection=conn)
+        with patch.object(payments, 'get_all_accounts', patched_all_accounts),\
+             patch.object(payments, 'get_account_transactions', patched_account_transactions):
+            yield conn
         transaction.rollback()
 
 def test_successful_payment(connection):
@@ -32,16 +34,16 @@ def test_successful_payment2(connection):
     accts = all_accounts()
     assert accts[1]['balance'] == 170
     assert accts[2]['balance'] == 230
-    
+
 def test_balance_can_go_to_zero(connection):
     pay(1, 2, 200, connection)
     assert all_accounts()[1]['balance'] == 0
-    
+
 def test_transaction_log(connection):
     pay(1, 2, 30, connection)
     pay(2, 3, 30, connection)
     assert len(account_transactions(2)) == 2
-    
+
 def test_give_back_money(connection):
     before = all_accounts()
     pay(1, 2, 30, connection)
@@ -52,21 +54,21 @@ def test_give_back_money(connection):
 def test_negative_balance(connection):
     with raises(IntegrityError):
         pay(1, 2, 200.01, connection)
-    
+
 def test_nonexisting_account_id(connection):
     with raises(IntegrityError):
         pay(101, 2, 10, connection)
-    
+
 def test_negative_amount(connection):
     with raises(IntegrityError):
         pay(1, 2, -1, connection)
-        
-        
+
+
 def test_all_accounts():
     with patch.object(payments, 'get_all_accounts') as mocked_model:
         all_accounts()
     assert mocked_model.call_args == ()
-                                       
+
 def test_account_transactions():
     with patch.object(payments, 'get_account_transactions') as mocked_model:
         account_transactions(2)
