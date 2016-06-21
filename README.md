@@ -28,8 +28,8 @@ This will return all the transactions involving a single account
 This will make a payment, while respecting the constraints (source and recipient have to exist, no negative balance)
 
 
-By accessing `http://localhost:8000/index` the Elm frontend can be used to interact with the api
+By accessing `http://localhost:8000/index` the Halogen frontend can be used to interact with the api
 
-To rebuild `index.html` simply run
+To rebuild `app.js` simply go in the `frontend` directory and run
 
-    elm-make frontend/Main.elm
+    pulp --watch browserify --to dist/app.j

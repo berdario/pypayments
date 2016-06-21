@@ -9,6 +9,10 @@ from model import get_all_accounts, get_account_transactions, record_payment_tra
 def index():
     return 'index.html'
 
+@hug.get('/app.js', output=hug.output_format.file)
+def app():
+    return 'app.js'
+
 @hug.get('/accounts')
 def main():
     def to_dict(result):

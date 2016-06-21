@@ -1,0 +1,18 @@
+{
+  "name": "frontend",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "output"
+  ],
+  "dependencies": {
+    "purescript-halogen": "*",
+    "purescript-affjax": "^0.13.2",
+    "purescript-colors": "^0.4.3",
+    "purescript-foreign-generic": "0",
+    "purescript-halogen-css": "^0.5.0",
+    "purescript-node-url": "0.1"
+  }
+}
