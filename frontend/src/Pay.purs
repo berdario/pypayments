@@ -8,6 +8,7 @@ import Control.Monad.Free (Free)
 import Data.Maybe (Maybe(..))
 import Data.Int (fromString)
 import Data.List as List
+import Data.Map (Map, keys)
 import Global (readFloat)
 
 import CSS.Background (backgroundColor)
@@ -29,14 +30,12 @@ data TransactionOutcome = Success | Fail
 type State =
     { newTransaction :: Transaction
     , lastTransaction :: Maybe TransactionOutcome
-    , accounts :: List.List AccountId
     }
 
 data Query a
     = SetSource AccountId a
     | SetRecipient AccountId a
     | SetAmount Number a
-    | SetAccounts (List.List AccountId) a
     | DoPayment a
 
 data Slot = Slot
@@ -44,7 +43,7 @@ derive instance eqSlot :: Eq Slot
 derive instance ordSlot :: Ord Slot
 
 init :: State
-init = {newTransaction: Transaction {source_id: 1, recipient_id: 1, amount: 0.0}, lastTransaction: Nothing, accounts: List.Nil}
+init = {newTransaction: Transaction {source_id: 1, recipient_id: 1, amount: 0.0}, lastTransaction: Nothing}
 
 idOption id = H.option_ [H.text (show id)]
 
@@ -58,16 +57,16 @@ lastTransactionHtml lastOutcome =
 intInput f = pure <<< map (action <<< f) <<< fromString
 numInput f s = pure $ Just $ action $ f $ readFloat s
 
-payComponent :: forall eff. Component State Query (Aff (AppEffects eff))
-payComponent = component { render, eval }
+payComponent :: forall a eff. Map AccountId a -> Component State Query (Aff (AppEffects eff))
+payComponent accountsMap = component { render, eval }
     where
 
     render :: State -> ComponentHTML Query
-    render {lastTransaction, accounts} = H.div_
+    render {lastTransaction} = H.div_
         [ lastTransactionHtml lastTransaction
-        , H.select [E.onValueChange (intInput SetSource)] $ List.toUnfoldable (map idOption accounts)
+        , H.select [E.onValueChange (intInput SetSource)] $ List.toUnfoldable (map idOption $ keys accountsMap)
         , H.input  [E.onValueInput  (numInput SetAmount), P.inputType P.InputNumber, A.valueMin "0", A.valueMax "1000", P.name "amount"]
-        , H.select [E.onValueChange (intInput SetRecipient)] $ List.toUnfoldable (map idOption accounts)
+        , H.select [E.onValueChange (intInput SetRecipient)] $ List.toUnfoldable (map idOption $ keys accountsMap)
         , H.button [E.onClick  (E.input_ DoPayment)] [H.text "transfer money"]]
 
     eval :: Natural Query (ComponentDSL State Query (Aff (AppEffects eff)))
@@ -83,15 +82,11 @@ payComponent = component { render, eval }
         Transaction t <- gets _.newTransaction
         modify (_{newTransaction=Transaction t{amount=amount}})
         pure next
-    eval (SetAccounts accounts next) = do
-        modify _{accounts=accounts}
-        pure next
     eval (DoPayment next) = do
         transaction <- gets _.newTransaction
         lastOutcome <- fromAff $ pay transaction
         modify (_{lastTransaction=Just lastOutcome})
         fromAff $ sleep 3000
-        -- mapF (map $ later' 3000) get
         modify (_{lastTransaction=Nothing})
         pure next
 

@@ -69,23 +69,20 @@ ui = parentComponent {render, eval, peek: Nothing}
     where
 
     render :: State -> ParentHTML ChildState Query ChildQuery (Aff (AppEffects eff)) ChildSlot
-    render {page} = H.div_
+    render {page, accounts} = H.div_
         [ navbar
         , case page of
-              Accounts -> H.slot' pathAccounts Accounts.Slot \_ -> {component: Accounts.accountsComponent, initialState: Accounts.init}
-              Pay -> H.slot' pathPay Pay.Slot \_ -> {component: Pay.payComponent, initialState: Pay.init}
+              Accounts -> H.slot' pathAccounts Accounts.Slot \_ -> {component: Accounts.accountsComponent accounts, initialState: Accounts.init}
+              Pay -> H.slot' pathPay Pay.Slot \_ -> {component: Pay.payComponent accounts, initialState: Pay.init}
         ]
 
     eval :: Natural Query (ParentDSL State ChildState Query ChildQuery (Aff (AppEffects eff)) ChildSlot)
     eval (SetActivePage Pay next) = do
         modify (\state -> state{page=Pay})
-        accounts <- gets $ _.accounts >>> Map.keys
-        query' pathPay Pay.Slot $ action $ Pay.SetAccounts accounts
         pure next
     eval (SetActivePage Accounts next) = do
         ForeignAccounts accounts <- fromAff getAccounts
         modify _{accounts=accounts, page=Accounts}
-        query' pathAccounts Accounts.Slot $ action $ Accounts.SetAccounts accounts
         pure next
 
 

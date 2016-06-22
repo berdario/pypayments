@@ -20,21 +20,19 @@ import Common
 
 
 type State =
-    { accounts :: Map.Map AccountId Account
-    , accountTransactions :: Maybe (Array Transaction)
+    { accountTransactions :: Maybe (Array Transaction)
     , inspectedAccount :: Maybe AccountId
     }
 
 data Query a
     = ToggleShowTransactions AccountId a
-    | SetAccounts (Map.Map AccountId Account) a
 
 data Slot = Slot
 derive instance eqSlot :: Eq Slot
 derive instance ordSlot :: Ord Slot
 
 init :: State
-init = {accounts: Map.empty, accountTransactions: Nothing, inspectedAccount: Nothing}
+init = {accountTransactions: Nothing, inspectedAccount: Nothing}
 
 transactionToDiv (Transaction t) = H.div_
     [H.text (mconcat
@@ -61,12 +59,12 @@ accountDataToHtml mAccount mTransactions (Tuple id (Account acct)) =
     Tuple true (Just trans) -> accountDiv id [accountText, transactionDetail trans]
     _ -> accountDiv id [accountText]
 
-accountsComponent :: forall eff. Component State Query (Aff (AppEffects eff))
-accountsComponent = component { render, eval }
+accountsComponent :: forall eff. Map.Map AccountId Account -> Component State Query (Aff (AppEffects eff))
+accountsComponent accounts = component { render, eval }
     where
 
     render :: State -> ComponentHTML Query
-    render {inspectedAccount, accountTransactions, accounts} = H.div_ $ map (accountDataToHtml inspectedAccount accountTransactions) $ toUnfoldable (Map.toList accounts)
+    render {inspectedAccount, accountTransactions} = H.div_ $ map (accountDataToHtml inspectedAccount accountTransactions) $ toUnfoldable (Map.toList accounts)
 
     eval :: Natural Query (ComponentDSL State Query (Aff (AppEffects eff)))
     eval (ToggleShowTransactions id next) = do
@@ -76,9 +74,6 @@ accountsComponent = component { render, eval }
             true -> do
                 transactions <- fromAff $ getTransactions id
                 modify $ (_{inspectedAccount=Just id, accountTransactions=transactions})
-        pure next
-    eval (SetAccounts accounts next) = do
-        modify _{accounts=accounts}
         pure next
 
 getTransactions :: forall eff a. AccountId -> Aff (ajax :: AJAX | eff) (Maybe (Array Transaction))
