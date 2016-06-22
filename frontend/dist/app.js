@@ -1288,15 +1288,6 @@ var ToggleShowTransactions = (function () {
     };
     return ToggleShowTransactions;
 })();
-var GetAccounts = (function () {
-    function GetAccounts(value0) {
-        this.value0 = value0;
-    };
-    GetAccounts.create = function (value0) {
-        return new GetAccounts(value0);
-    };
-    return GetAccounts;
-})();
 var SetAccounts = (function () {
     function SetAccounts(value0, value1) {
         this.value0 = value0;
@@ -1310,29 +1301,21 @@ var SetAccounts = (function () {
     return SetAccounts;
 })();
 var transactionToDiv = function (v) {
-    return Halogen_HTML_Elements.div_([ Halogen_HTML.text(Data_Foldable.mconcat(Data_Foldable.foldableArray)(Data_Monoid.monoidString)([ "source: ", Prelude.show(Prelude.showInt)(v.source), " recipient: ", Prelude.show(Prelude.showInt)(v.recipient), " amount: ", Prelude.show(Prelude.showNumber)(v.amount) ])) ]);
+    return Halogen_HTML_Elements.div_([ Halogen_HTML.text(Data_Foldable.mconcat(Data_Foldable.foldableArray)(Data_Monoid.monoidString)([ "source: ", Prelude.show(Prelude.showInt)(v.source_id), " recipient: ", Prelude.show(Prelude.showInt)(v.recipient_id), " amount: ", Prelude.show(Prelude.showNumber)(v.amount) ])) ]);
 };
 var transactionDetail = function (trans) {
     return Halogen_HTML_Elements.div_(Prelude.map(Prelude.functorArray)(transactionToDiv)(trans));
-};
-var toggleInspection = function (v) {
-    return function (v1) {
-        if (v1 instanceof Data_Maybe.Just) {
-            return Prelude["return"](Control_Monad_Aff.applicativeAff)(Data_Maybe.Nothing.value);
-        };
-        if (v1 instanceof Data_Maybe.Nothing) {
-            return Prelude.bind(Control_Monad_Aff.bindAff)(Network_HTTP_Affjax.get(Network_HTTP_Affjax_Response.responsableString)(Common.transactionsUrl(Prelude.showInt)(v)))(function (v2) {
-                var foreignTransactions = Data_Foreign_Class.readJSON(Data_Foreign_Class.arrayIsForeign(Common.foreignTransaction))(v2.response);
-                return Prelude["return"](Control_Monad_Aff.applicativeAff)(Common.toMaybe(foreignTransactions));
-            });
-        };
-        throw new Error("Failed pattern match at Accounts line 87, column 1 - line 88, column 1: " + [ v.constructor.name, v1.constructor.name ]);
-    };
 };
 var init = {
     accounts: Data_Map.empty, 
     accountTransactions: Data_Maybe.Nothing.value, 
     inspectedAccount: Data_Maybe.Nothing.value
+};
+var getTransactions = function (id) {
+    return Prelude.bind(Control_Monad_Aff.bindAff)(Network_HTTP_Affjax.get(Network_HTTP_Affjax_Response.responsableString)(Common.transactionsUrl(Prelude.showInt)(id)))(function (v) {
+        var foreignTransactions = Data_Foreign_Class.readJSON(Data_Foreign_Class.arrayIsForeign(Common.foreignTransaction))(v.response);
+        return Prelude["return"](Control_Monad_Aff.applicativeAff)(Common.toMaybe(foreignTransactions));
+    });
 };
 var eqSlot = new Prelude.Eq(function (x) {
     return function (y) {
@@ -1362,9 +1345,9 @@ var accountDataToHtml = function (mAccount) {
     return function (mTransactions) {
         return function (v) {
             var accountText = accountToText(Prelude.showInt)(Prelude.showNumber)(v.value0)(v.value1);
-            var $38 = new Data_Tuple.Tuple(Prelude["=="](Data_Maybe.eqMaybe(Prelude.eqInt))(mAccount)(new Data_Maybe.Just(v.value0)), mTransactions);
-            if ($38.value0 && $38.value1 instanceof Data_Maybe.Just) {
-                return accountDiv(v.value0)([ accountText, transactionDetail($38.value1.value0) ]);
+            var $32 = new Data_Tuple.Tuple(Prelude["=="](Data_Maybe.eqMaybe(Prelude.eqInt))(mAccount)(new Data_Maybe.Just(v.value0)), mTransactions);
+            if ($32.value0 && $32.value1 instanceof Data_Maybe.Just) {
+                return accountDiv(v.value0)([ accountText, transactionDetail($32.value1.value0) ]);
             };
             return accountDiv(v.value0)([ accountText ]);
         };
@@ -1379,47 +1362,56 @@ var accountsComponent = (function () {
             return Prelude.bind(Control_Monad_Free.freeBind)(Halogen_Query.gets(function (x) {
                 return x;
             }))(function (v1) {
-                return Prelude.bind(Control_Monad_Free.freeBind)(Control_Monad.when(Control_Monad_Free.freeMonad)(Prelude["/="](Data_Maybe.eqMaybe(Prelude.eqInt))(new Data_Maybe.Just(v.value0))(v1.inspectedAccount))(Prelude.bind(Control_Monad_Free.freeBind)(Control_Monad_Aff_Free.fromAff(Control_Monad_Aff_Free.affableFree(Halogen_Query_HalogenF.affableHalogenF(Control_Monad_Aff_Free.affableAff)))(toggleInspection(v.value0)(v1.accountTransactions)))(function (v2) {
-                    return Halogen_Query.modify(function (v3) {
-                        var $51 = {};
-                        for (var $52 in v3) {
-                            if (v3.hasOwnProperty($52)) {
-                                $51[$52] = v3[$52];
+                return Prelude.bind(Control_Monad_Free.freeBind)((function () {
+                    var $44 = Prelude["/="](Data_Maybe.eqMaybe(Prelude.eqInt))(new Data_Maybe.Just(v.value0))(v1.inspectedAccount);
+                    if (!$44) {
+                        return Halogen_Query.modify(function (v2) {
+                            var $45 = {};
+                            for (var $46 in v2) {
+                                if (v2.hasOwnProperty($46)) {
+                                    $45[$46] = v2[$46];
+                                };
                             };
-                        };
-                        $51.inspectedAccount = new Data_Maybe.Just(v.value0);
-                        $51.accountTransactions = v2;
-                        return $51;
-                    });
-                })))(function () {
+                            $45.inspectedAccount = Data_Maybe.Nothing.value;
+                            return $45;
+                        });
+                    };
+                    if ($44) {
+                        return Prelude.bind(Control_Monad_Free.freeBind)(Control_Monad_Aff_Free.fromAff(Control_Monad_Aff_Free.affableFree(Halogen_Query_HalogenF.affableHalogenF(Control_Monad_Aff_Free.affableAff)))(getTransactions(v.value0)))(function (v2) {
+                            return Halogen_Query.modify(function (v3) {
+                                var $48 = {};
+                                for (var $49 in v3) {
+                                    if (v3.hasOwnProperty($49)) {
+                                        $48[$49] = v3[$49];
+                                    };
+                                };
+                                $48.inspectedAccount = new Data_Maybe.Just(v.value0);
+                                $48.accountTransactions = v2;
+                                return $48;
+                            });
+                        });
+                    };
+                    throw new Error("Failed pattern match at Accounts line 74, column 9 - line 79, column 9: " + [ $44.constructor.name ]);
+                })())(function () {
                     return Prelude.pure(Control_Monad_Free.freeApplicative)(v.value1);
                 });
             });
         };
-        if (v instanceof GetAccounts) {
-            return Prelude.bind(Control_Monad_Free.freeBind)(Halogen_Query.gets(function ($63) {
-                return Data_Map.keys((function (v1) {
-                    return v1.accounts;
-                })($63));
-            }))(function (v1) {
-                return Prelude.pure(Control_Monad_Free.freeApplicative)(v.value0(v1));
-            });
-        };
         if (v instanceof SetAccounts) {
             return Prelude.bind(Control_Monad_Free.freeBind)(Halogen_Query.modify(function (v1) {
-                var $59 = {};
-                for (var $60 in v1) {
-                    if (v1.hasOwnProperty($60)) {
-                        $59[$60] = v1[$60];
+                var $54 = {};
+                for (var $55 in v1) {
+                    if (v1.hasOwnProperty($55)) {
+                        $54[$55] = v1[$55];
                     };
                 };
-                $59.accounts = v.value0;
-                return $59;
+                $54.accounts = v.value0;
+                return $54;
             }))(function () {
                 return Prelude.pure(Control_Monad_Free.freeApplicative)(v.value1);
             });
         };
-        throw new Error("Failed pattern match at Accounts line 73, column 5 - line 79, column 5: " + [ v.constructor.name ]);
+        throw new Error("Failed pattern match at Accounts line 72, column 5 - line 80, column 5: " + [ v.constructor.name ]);
     };
     return Halogen_Component.component({
         render: render, 
@@ -1429,9 +1421,8 @@ var accountsComponent = (function () {
 module.exports = {
     Slot: Slot, 
     ToggleShowTransactions: ToggleShowTransactions, 
-    GetAccounts: GetAccounts, 
     SetAccounts: SetAccounts, 
-    toggleInspection: toggleInspection, 
+    getTransactions: getTransactions, 
     accountsComponent: accountsComponent, 
     accountDataToHtml: accountDataToHtml, 
     accountDiv: accountDiv, 
@@ -3189,12 +3180,12 @@ var genericTransaction = new Data_Generic.Generic(function (v) {
         return Prelude.apply(Data_Maybe.applyMaybe)(new Data_Maybe.Just(Transaction))((function (r) {
             if (r instanceof Data_Generic.SRecord && r.value0.length === 3) {
                 return Prelude.apply(Data_Maybe.applyMaybe)(Prelude.apply(Data_Maybe.applyMaybe)(Prelude.apply(Data_Maybe.applyMaybe)(new Data_Maybe.Just(function (amount1) {
-                    return function (recipient1) {
-                        return function (source1) {
+                    return function (recipient_id1) {
+                        return function (source_id1) {
                             return {
                                 amount: amount1, 
-                                recipient: recipient1, 
-                                source: source1
+                                recipient_id: recipient_id1, 
+                                source_id: source_id1
                             };
                         };
                     };
@@ -3214,12 +3205,12 @@ var genericTransaction = new Data_Generic.Generic(function (v) {
                     return Data_Generic.toSignature(Data_Generic.genericNumber)(Data_Generic.anyProxy);
                 }
             }, {
-                recLabel: "recipient", 
+                recLabel: "recipient_id", 
                 recValue: function ($dollarq2) {
                     return Data_Generic.toSignature(Data_Generic.genericInt)(Data_Generic.anyProxy);
                 }
             }, {
-                recLabel: "source", 
+                recLabel: "source_id", 
                 recValue: function ($dollarq2) {
                     return Data_Generic.toSignature(Data_Generic.genericInt)(Data_Generic.anyProxy);
                 }
@@ -3234,14 +3225,14 @@ var genericTransaction = new Data_Generic.Generic(function (v) {
                 return Data_Generic.toSpine(Data_Generic.genericNumber)(v.amount);
             }
         }, {
-            recLabel: "recipient", 
+            recLabel: "recipient_id", 
             recValue: function ($dollarq1) {
-                return Data_Generic.toSpine(Data_Generic.genericInt)(v.recipient);
+                return Data_Generic.toSpine(Data_Generic.genericInt)(v.recipient_id);
             }
         }, {
-            recLabel: "source", 
+            recLabel: "source_id", 
             recValue: function ($dollarq1) {
-                return Data_Generic.toSpine(Data_Generic.genericInt)(v.source);
+                return Data_Generic.toSpine(Data_Generic.genericInt)(v.source_id);
             }
         } ]);
     } ]);
@@ -3328,7 +3319,7 @@ var foreignAccount = new Data_Foreign_Class.IsForeign(Data_Foreign_Generic.readG
     $35.unwrapNewtypes = true;
     return $35;
 })()));
-var baseUrl = "http://localhost:8082";
+var baseUrl = "http://localhost:8000";
 var payUrl = function (dictShow) {
     return function (dictShow1) {
         return function (dictShow2) {
@@ -27683,13 +27674,15 @@ var Halogen_HTML_Elements = require("../Halogen.HTML.Elements");
 var Halogen_HTML_Elements_Indexed = require("../Halogen.HTML.Elements.Indexed");
 var Halogen_HTML_Events = require("../Halogen.HTML.Events");
 var Halogen_HTML = require("../Halogen.HTML");
-var Pay_1 = require("../Pay");
-var Control_Monad_Free = require("../Control.Monad.Free");
-var Halogen_Component = require("../Halogen.Component");
-var Halogen_Query = require("../Halogen.Query");
 var Data_Foreign_Index = require("../Data.Foreign.Index");
 var Data_Foldable = require("../Data.Foldable");
 var Network_HTTP_Affjax_Response = require("../Network.HTTP.Affjax.Response");
+var Pay_1 = require("../Pay");
+var Control_Monad_Free = require("../Control.Monad.Free");
+var Halogen_Query = require("../Halogen.Query");
+var Halogen_Component = require("../Halogen.Component");
+var Control_Monad_Aff_Free = require("../Control.Monad.Aff.Free");
+var Halogen_Query_HalogenF = require("../Halogen.Query.HalogenF");
 var Halogen_Driver = require("../Halogen.Driver");
 var Accounts = (function () {
     function Accounts() {
@@ -27717,18 +27710,6 @@ var SetActivePage = (function () {
     };
     return SetActivePage;
 })();
-var SetAccounts = (function () {
-    function SetAccounts(value0, value1) {
-        this.value0 = value0;
-        this.value1 = value1;
-    };
-    SetAccounts.create = function (value0) {
-        return function (value1) {
-            return new SetAccounts(value0, value1);
-        };
-    };
-    return SetAccounts;
-})();
 var ForeignAccounts = function (x) {
     return x;
 };
@@ -27738,78 +27719,9 @@ var toInt = function (x) {
 var pathPay = Halogen_Component_ChildPath.cpR;
 var pathAccounts = Halogen_Component_ChildPath.cpL;
 var navbar = Halogen_HTML_Elements.nav_([ Halogen_HTML_Elements.ul_([ Halogen_HTML_Elements_Indexed.li([ Halogen_HTML_Events_Indexed.onClick(Halogen_HTML_Events.input_(SetActivePage.create(Accounts.value))) ])([ Halogen_HTML.text("Transactions") ]), Halogen_HTML_Elements_Indexed.li([ Halogen_HTML_Events_Indexed.onClick(Halogen_HTML_Events.input_(SetActivePage.create(Pay.value))) ])([ Halogen_HTML.text("Make a payment") ]) ]) ]);
-var ui = (function () {
-    var render = function (v) {
-        return Halogen_HTML_Elements.div_([ navbar, (function () {
-            if (v.page instanceof Accounts) {
-                return Halogen_HTML["slot'"](Control_Monad_Aff.functorAff)(pathAccounts)(Accounts_1.Slot.value)(function (v1) {
-                    return {
-                        component: Accounts_1.accountsComponent, 
-                        initialState: Accounts_1.init
-                    };
-                });
-            };
-            if (v.page instanceof Pay) {
-                return Halogen_HTML["slot'"](Control_Monad_Aff.functorAff)(pathPay)(Pay_1.Slot.value)(function (v1) {
-                    return {
-                        component: Pay_1.payComponent, 
-                        initialState: Pay_1.init
-                    };
-                });
-            };
-            throw new Error("Failed pattern match at Main line 87, column 11 - line 90, column 9: " + [ v.page.constructor.name ]);
-        })() ]);
-    };
-    var $$eval = function (v) {
-        if (v instanceof SetActivePage && v.value0 instanceof Pay) {
-            return Prelude.bind(Control_Monad_Free.freeBind)(Halogen_Component["query'"](Control_Monad_Aff.functorAff)(Data_Either.ordEither(Accounts_1.ordSlot)(Pay_1.ordSlot))(pathAccounts)(Accounts_1.Slot.value)(Halogen_Query.request(Accounts_1.GetAccounts.create)))(function (v1) {
-                return Prelude.bind(Control_Monad_Free.freeBind)(Halogen_Component["query'"](Control_Monad_Aff.functorAff)(Data_Either.ordEither(Accounts_1.ordSlot)(Pay_1.ordSlot))(pathPay)(Pay_1.Slot.value)(Halogen_Query.action(Pay_1.SetAccounts.create(Data_Maybe.maybe(Data_List.Nil.value)(function (x) {
-                    return x;
-                })(v1)))))(function () {
-                    return Prelude.bind(Control_Monad_Free.freeBind)(Halogen_Query.modify(function (state) {
-                        var $20 = {};
-                        for (var $21 in state) {
-                            if (state.hasOwnProperty($21)) {
-                                $20[$21] = state[$21];
-                            };
-                        };
-                        $20.page = Pay.value;
-                        return $20;
-                    }))(function () {
-                        return Prelude.pure(Control_Monad_Free.freeApplicative)(v.value1);
-                    });
-                });
-            });
-        };
-        if (v instanceof SetActivePage) {
-            return Prelude.bind(Control_Monad_Free.freeBind)(Halogen_Query.modify(function (state) {
-                var $24 = {};
-                for (var $25 in state) {
-                    if (state.hasOwnProperty($25)) {
-                        $24[$25] = state[$25];
-                    };
-                };
-                $24.page = v.value0;
-                return $24;
-            }))(function () {
-                return Prelude.pure(Control_Monad_Free.freeApplicative)(v.value1);
-            });
-        };
-        if (v instanceof SetAccounts) {
-            return Prelude.bind(Control_Monad_Free.freeBind)(Halogen_Component["query'"](Control_Monad_Aff.functorAff)(Data_Either.ordEither(Accounts_1.ordSlot)(Pay_1.ordSlot))(pathAccounts)(Accounts_1.Slot.value)(Halogen_Query.action(Accounts_1.SetAccounts.create(v.value0))))(function () {
-                return Prelude.pure(Control_Monad_Free.freeApplicative)(v.value1);
-            });
-        };
-        throw new Error("Failed pattern match at Main line 93, column 5 - line 98, column 5: " + [ v.constructor.name ]);
-    };
-    return Halogen_Component.parentComponent(Control_Monad_Aff.functorAff)(Data_Either.ordEither(Accounts_1.ordSlot)(Pay_1.ordSlot))({
-        render: render, 
-        "eval": $$eval, 
-        peek: Data_Maybe.Nothing.value
-    });
-})();
 var initialState = {
-    page: Accounts.value
+    page: Accounts.value, 
+    accounts: Data_Map.empty
 };
 var eqPage = new Prelude.Eq(function (x) {
     return function (y) {
@@ -27834,37 +27746,94 @@ var foreignToNative = function (dictIsForeign) {
         return Prelude[">>="](Data_Either.bindEither)(Prelude[">>="](Data_Either.bindEither)(Data_Foreign_Keys.keys(foreignMap1))(Data_Traversable.traverse(Data_Traversable.traversableArray)(Data_Either.applicativeEither)(toInt)))(changeForeignKeys(dictIsForeign)(foreignMap1));
     };
 };
-var foreignMap = new Data_Foreign_Class.IsForeign(function ($38) {
-    return Prelude.map(Data_Either.functorEither)(ForeignAccounts)(foreignToNative(Common.foreignAccount)($38));
+var foreignMap = new Data_Foreign_Class.IsForeign(function ($37) {
+    return Prelude.map(Data_Either.functorEither)(ForeignAccounts)(foreignToNative(Common.foreignAccount)($37));
 });
 var getAccounts = Prelude.bind(Control_Monad_Aff.bindAff)(Network_HTTP_Affjax.get(Network_HTTP_Affjax_Response.responsableString)(Common.accountsUrl))(function (v) {
     return Prelude["return"](Control_Monad_Aff.applicativeAff)(Data_Either.either(Prelude["const"](Data_Map.empty))(function (x) {
         return x;
     })(Data_Foreign_Class.readJSON(foreignMap)(v.response)));
 });
+var ui = (function () {
+    var render = function (v) {
+        return Halogen_HTML_Elements.div_([ navbar, (function () {
+            if (v.page instanceof Accounts) {
+                return Halogen_HTML["slot'"](Control_Monad_Aff.functorAff)(pathAccounts)(Accounts_1.Slot.value)(function (v1) {
+                    return {
+                        component: Accounts_1.accountsComponent, 
+                        initialState: Accounts_1.init
+                    };
+                });
+            };
+            if (v.page instanceof Pay) {
+                return Halogen_HTML["slot'"](Control_Monad_Aff.functorAff)(pathPay)(Pay_1.Slot.value)(function (v1) {
+                    return {
+                        component: Pay_1.payComponent, 
+                        initialState: Pay_1.init
+                    };
+                });
+            };
+            throw new Error("Failed pattern match at Main line 74, column 11 - line 77, column 9: " + [ v.page.constructor.name ]);
+        })() ]);
+    };
+    var $$eval = function (v) {
+        if (v.value0 instanceof Pay) {
+            return Prelude.bind(Control_Monad_Free.freeBind)(Halogen_Query.modify(function (state) {
+                var $25 = {};
+                for (var $26 in state) {
+                    if (state.hasOwnProperty($26)) {
+                        $25[$26] = state[$26];
+                    };
+                };
+                $25.page = Pay.value;
+                return $25;
+            }))(function () {
+                return Prelude.bind(Control_Monad_Free.freeBind)(Halogen_Query.gets(function ($38) {
+                    return Data_Map.keys((function (v1) {
+                        return v1.accounts;
+                    })($38));
+                }))(function (v1) {
+                    return Prelude.bind(Control_Monad_Free.freeBind)(Halogen_Component["query'"](Control_Monad_Aff.functorAff)(Data_Either.ordEither(Accounts_1.ordSlot)(Pay_1.ordSlot))(pathPay)(Pay_1.Slot.value)(Halogen_Query.action(Pay_1.SetAccounts.create(v1))))(function () {
+                        return Prelude.pure(Control_Monad_Free.freeApplicative)(v.value1);
+                    });
+                });
+            });
+        };
+        if (v.value0 instanceof Accounts) {
+            return Prelude.bind(Control_Monad_Free.freeBind)(Control_Monad_Aff_Free.fromAff(Control_Monad_Aff_Free.affableFree(Halogen_Query_HalogenF.affableHalogenF(Control_Monad_Aff_Free.affableFree(Halogen_Query_HalogenF.affableHalogenF(Control_Monad_Aff_Free.affableAff)))))(getAccounts))(function (v1) {
+                return Prelude.bind(Control_Monad_Free.freeBind)(Halogen_Query.modify(function (v2) {
+                    var $31 = {};
+                    for (var $32 in v2) {
+                        if (v2.hasOwnProperty($32)) {
+                            $31[$32] = v2[$32];
+                        };
+                    };
+                    $31.accounts = v1;
+                    $31.page = Accounts.value;
+                    return $31;
+                }))(function () {
+                    return Prelude.bind(Control_Monad_Free.freeBind)(Halogen_Component["query'"](Control_Monad_Aff.functorAff)(Data_Either.ordEither(Accounts_1.ordSlot)(Pay_1.ordSlot))(pathAccounts)(Accounts_1.Slot.value)(Halogen_Query.action(Accounts_1.SetAccounts.create(v1))))(function () {
+                        return Prelude.pure(Control_Monad_Free.freeApplicative)(v.value1);
+                    });
+                });
+            });
+        };
+        throw new Error("Failed pattern match at Main line 80, column 5 - line 85, column 5: " + [ v.constructor.name ]);
+    };
+    return Halogen_Component.parentComponent(Control_Monad_Aff.functorAff)(Data_Either.ordEither(Accounts_1.ordSlot)(Pay_1.ordSlot))({
+        render: render, 
+        "eval": $$eval, 
+        peek: Data_Maybe.Nothing.value
+    });
+})();
 var main = Halogen_Util.runHalogenAff(Prelude.bind(Control_Monad_Aff.bindAff)(Halogen_Util.awaitBody)(function (v) {
     return Prelude.bind(Control_Monad_Aff.bindAff)(Halogen_Driver.runUI(ui)(Halogen_Component.parentState(initialState))(v))(function (v1) {
-        return Prelude.bind(Control_Monad_Aff.bindAff)(getAccounts)(function (v2) {
-            return v1(Data_Functor_Coproduct.left(Halogen_Query.action(SetAccounts.create(v2))));
-        });
+        return v1(Data_Functor_Coproduct.left(Halogen_Query.action(SetActivePage.create(Accounts.value))));
     });
 }));
-var accounts = function (state) {
-    return Halogen_HTML_Elements.div_([ Halogen_HTML_Elements.h1_([ Halogen_HTML.text("Hello world!") ]), Halogen_HTML_Elements.p_([ Halogen_HTML.text("Why not toggle this button:") ]), Halogen_HTML_Elements_Indexed.button([ Halogen_HTML_Events_Indexed.onClick(Halogen_HTML_Events.input_(SetActivePage.create(Accounts.value))) ])([ Halogen_HTML.text((function () {
-        var $37 = !Prelude["=="](eqPage)(state.page)(Accounts.value);
-        if ($37) {
-            return "Don't push me";
-        };
-        if (!$37) {
-            return "I said don't push me!";
-        };
-        throw new Error("Failed pattern match at Main line 73, column 13 - line 77, column 11: " + [ $37.constructor.name ]);
-    })()) ]) ]);
-};
 module.exports = {
     ForeignAccounts: ForeignAccounts, 
     SetActivePage: SetActivePage, 
-    SetAccounts: SetAccounts, 
     Accounts: Accounts, 
     Pay: Pay, 
     main: main, 
@@ -27873,7 +27842,6 @@ module.exports = {
     toInt: toInt, 
     getAccounts: getAccounts, 
     ui: ui, 
-    accounts: accounts, 
     navbar: navbar, 
     pathPay: pathPay, 
     pathAccounts: pathAccounts, 
@@ -27882,7 +27850,7 @@ module.exports = {
     foreignMap: foreignMap
 };
 
-},{"../Accounts":27,"../Common":35,"../Control.Monad.Aff":53,"../Control.Monad.Eff":65,"../Control.Monad.Free":69,"../Data.Array":116,"../Data.Either":129,"../Data.Foldable":135,"../Data.Foreign":146,"../Data.Foreign.Class":136,"../Data.Foreign.Index":139,"../Data.Foreign.Keys":141,"../Data.Functor.Coproduct":151,"../Data.Int":163,"../Data.List":166,"../Data.Map":167,"../Data.Maybe":172,"../Data.Traversable":199,"../Data.Tuple":200,"../Halogen":238,"../Halogen.Component":210,"../Halogen.Component.ChildPath":207,"../Halogen.Driver":211,"../Halogen.HTML":230,"../Halogen.HTML.Elements":217,"../Halogen.HTML.Elements.Indexed":216,"../Halogen.HTML.Events":223,"../Halogen.HTML.Events.Indexed":221,"../Halogen.HTML.Indexed":224,"../Halogen.Query":236,"../Halogen.Util":237,"../Network.HTTP.Affjax":245,"../Network.HTTP.Affjax.Response":243,"../Pay":249,"../Prelude":251}],240:[function(require,module,exports){
+},{"../Accounts":27,"../Common":35,"../Control.Monad.Aff":53,"../Control.Monad.Aff.Free":51,"../Control.Monad.Eff":65,"../Control.Monad.Free":69,"../Data.Array":116,"../Data.Either":129,"../Data.Foldable":135,"../Data.Foreign":146,"../Data.Foreign.Class":136,"../Data.Foreign.Index":139,"../Data.Foreign.Keys":141,"../Data.Functor.Coproduct":151,"../Data.Int":163,"../Data.List":166,"../Data.Map":167,"../Data.Maybe":172,"../Data.Traversable":199,"../Data.Tuple":200,"../Halogen":238,"../Halogen.Component":210,"../Halogen.Component.ChildPath":207,"../Halogen.Driver":211,"../Halogen.HTML":230,"../Halogen.HTML.Elements":217,"../Halogen.HTML.Elements.Indexed":216,"../Halogen.HTML.Events":223,"../Halogen.HTML.Events.Indexed":221,"../Halogen.HTML.Indexed":224,"../Halogen.Query":236,"../Halogen.Query.HalogenF":234,"../Halogen.Util":237,"../Network.HTTP.Affjax":245,"../Network.HTTP.Affjax.Response":243,"../Pay":249,"../Prelude":251}],240:[function(require,module,exports){
 /* global exports */
 "use strict";
 
@@ -28935,7 +28903,7 @@ var outcome = function (v) {
     return Fail.value;
 };
 var pay = function (v) {
-    return Prelude.bind(Control_Monad_Aff.bindAff)(Network_HTTP_Affjax.post(Network_HTTP_Affjax_Request.requestableUnit)(Network_HTTP_Affjax_Response.responsableUnit)(Common.payUrl(Prelude.showInt)(Prelude.showInt)(Prelude.showNumber)(v.source)(v.recipient)(v.amount))(Prelude.unit))(function (v1) {
+    return Prelude.bind(Control_Monad_Aff.bindAff)(Network_HTTP_Affjax.post(Network_HTTP_Affjax_Request.requestableUnit)(Network_HTTP_Affjax_Response.responsableUnit)(Common.payUrl(Prelude.showInt)(Prelude.showInt)(Prelude.showNumber)(v.source_id)(v.recipient_id)(v.amount))(Prelude.unit))(function (v1) {
         return Prelude.bind(Control_Monad_Aff.bindAff)(Prelude["return"](Control_Monad_Aff.applicativeAff)(v1.response))(function () {
             return Prelude["return"](Control_Monad_Aff.applicativeAff)(outcome(v1.status));
         });
@@ -28972,8 +28940,8 @@ var intInput = function (dictApplicative) {
 };
 var init = {
     newTransaction: {
-        source: 1, 
-        recipient: 1, 
+        source_id: 1, 
+        recipient_id: 1, 
         amount: 0.0
     }, 
     lastTransaction: Data_Maybe.Nothing.value, 
@@ -29007,7 +28975,7 @@ var payComponent = (function () {
                                 $41[$42] = v1[$42];
                             };
                         };
-                        $41.source = v.value0;
+                        $41.source_id = v.value0;
                         return $41;
                     })();
                     return $43;
@@ -29034,7 +29002,7 @@ var payComponent = (function () {
                                 $48[$49] = v1[$49];
                             };
                         };
-                        $48.recipient = v.value0;
+                        $48.recipient_id = v.value0;
                         return $48;
                     })();
                     return $50;
