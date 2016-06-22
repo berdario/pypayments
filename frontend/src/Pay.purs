@@ -44,7 +44,7 @@ derive instance eqSlot :: Eq Slot
 derive instance ordSlot :: Ord Slot
 
 init :: State
-init = {newTransaction: Transaction {source: 1, recipient: 1, amount: 0.0}, lastTransaction: Nothing, accounts: List.Nil}
+init = {newTransaction: Transaction {source_id: 1, recipient_id: 1, amount: 0.0}, lastTransaction: Nothing, accounts: List.Nil}
 
 idOption id = H.option_ [H.text (show id)]
 
@@ -73,11 +73,11 @@ payComponent = component { render, eval }
     eval :: Natural Query (ComponentDSL State Query (Aff (AppEffects eff)))
     eval (SetSource id next) = do
         Transaction t <- gets _.newTransaction
-        modify (_{newTransaction=Transaction t{source=id}})
+        modify (_{newTransaction=Transaction t{source_id=id}})
         pure next
     eval (SetRecipient id next) = do
         Transaction t <- gets _.newTransaction
-        modify (_{newTransaction=Transaction t{recipient=id}})
+        modify (_{newTransaction=Transaction t{recipient_id=id}})
         pure next
     eval (SetAmount amount next) = do
         Transaction t <- gets _.newTransaction
@@ -103,8 +103,9 @@ outcome (StatusCode x) | 200 <= x && x < 300 = Success
 outcome _ = Fail
 
 pay :: forall eff. Transaction -> Aff (ajax :: AJAX | eff) TransactionOutcome
-pay (Transaction {source, recipient, amount}) = do
-    result <- post (payUrl source recipient amount) unit
+pay (Transaction {source_id, recipient_id, amount}) = do
+    result <- post (payUrl source_id recipient_id amount) unit
     return (result.response :: Unit)
+    -- TODO retry timeout?
     return $ outcome result.status
 

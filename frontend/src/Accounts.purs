@@ -27,7 +27,6 @@ type State =
 
 data Query a
     = ToggleShowTransactions AccountId a
-    | GetAccounts (List AccountId -> a)
     | SetAccounts (Map.Map AccountId Account) a
 
 data Slot = Slot
@@ -39,8 +38,8 @@ init = {accounts: Map.empty, accountTransactions: Nothing, inspectedAccount: Not
 
 transactionToDiv (Transaction t) = H.div_
     [H.text (mconcat
-        ["source: ", show t.source
-        ," recipient: ", show t.recipient
+        ["source: ", show t.source_id
+        ," recipient: ", show t.recipient_id
         ," amount: ", show t.amount])]
 
 accountToText id {name, email, balance} =
@@ -72,20 +71,18 @@ accountsComponent = component { render, eval }
     eval :: Natural Query (ComponentDSL State Query (Aff (AppEffects eff)))
     eval (ToggleShowTransactions id next) = do
         {inspectedAccount, accountTransactions} <- gets (\x -> x) -- TODO no compile error over shadowing Halogen.get ?
-        when (Just id /= inspectedAccount) do
-            transactions <- fromAff $ toggleInspection id accountTransactions
-            modify $ (_{inspectedAccount=Just id, accountTransactions=transactions})
+        case Just id /= inspectedAccount of
+            false -> modify _{inspectedAccount=Nothing}
+            true -> do
+                transactions <- fromAff $ getTransactions id
+                modify $ (_{inspectedAccount=Just id, accountTransactions=transactions})
         pure next
-    eval (GetAccounts continue) = do
-        accounts <- gets $ _.accounts >>> Map.keys
-        pure $ continue $ accounts
     eval (SetAccounts accounts next) = do
         modify _{accounts=accounts}
         pure next
 
-toggleInspection :: forall eff a. AccountId -> Maybe a -> Aff (ajax :: AJAX | eff) (Maybe (Array Transaction))
-toggleInspection _ (Just _) = return Nothing
-toggleInspection id Nothing = do
+getTransactions :: forall eff a. AccountId -> Aff (ajax :: AJAX | eff) (Maybe (Array Transaction))
+getTransactions id = do
     {response} <- get (transactionsUrl id)
     let foreignTransactions = readJSON response
     -- TODO report ForeignError?

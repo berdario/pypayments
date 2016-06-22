@@ -11,12 +11,11 @@ import Data.Maybe (Maybe(..))
 import Halogen (HalogenEffects)
 import Network.HTTP.Affjax (AJAX)
 
-
 type AppEffects eff = HalogenEffects (ajax :: AJAX | eff)
 
 type AccountId = Int
 newtype Account = Account {name:: String, email:: String, balance:: Number}
-newtype Transaction = Transaction {source:: AccountId, recipient:: AccountId, amount:: Number}
+newtype Transaction = Transaction {source_id:: AccountId, recipient_id:: AccountId, amount:: Number}
 
 derive instance genericAccount :: Generic Account
 derive instance genericTransaction :: Generic Transaction
@@ -30,7 +29,7 @@ instance foreignTransaction :: IsForeign Transaction where
 toMaybe :: forall a b. Either a b -> Maybe b
 toMaybe = either (const Nothing) Just
 
-baseUrl = "http://localhost:8082"
+baseUrl = "http://localhost:8000"
 
 accountsUrl = baseUrl <> "/accounts"
 

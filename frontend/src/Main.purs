@@ -33,12 +33,13 @@ derive instance eqPage :: Eq Page -- todo
 
 data Query a
     = SetActivePage Page a
-    | SetAccounts (Map.Map AccountId Account) a
 
-type State = { page :: Page }
+type State = { page :: Page
+             , accounts :: Map.Map AccountId Account
+             }
 
 initialState :: State
-initialState = { page: Accounts}
+initialState = { page: Accounts, accounts: Map.empty }
 
 type ChildState = Either Accounts.State Pay.State
 type ChildQuery = Coproduct Accounts.Query Pay.Query
@@ -62,20 +63,6 @@ navbar =
             ]
         ]
 
-accounts :: State -> ComponentHTML Query
-accounts state = H.div_
-      [ H.h1_
-          [ H.text "Hello world!" ]
-      , H.p_
-          [ H.text "Why not toggle this button:" ]
-      , H.button
-          [ E.onClick (E.input_ (SetActivePage Accounts)) ]
-          [ H.text
-              if not (state.page == Accounts)
-              then "Don't push me"
-              else "I said don't push me!"
-          ]
-      ]
 
 ui :: forall eff. Component (StateP (Aff (AppEffects eff))) QueryP (Aff (AppEffects eff))
 ui = parentComponent {render, eval, peek: Nothing}
@@ -91,14 +78,13 @@ ui = parentComponent {render, eval, peek: Nothing}
 
     eval :: Natural Query (ParentDSL State ChildState Query ChildQuery (Aff (AppEffects eff)) ChildSlot)
     eval (SetActivePage Pay next) = do
-        accounts <- query' pathAccounts Accounts.Slot $ request Accounts.GetAccounts
-        query' pathPay Pay.Slot $ action $ Pay.SetAccounts $ maybe Nil (\x -> x) accounts
         modify (\state -> state{page=Pay})
+        accounts <- gets $ _.accounts >>> Map.keys
+        query' pathPay Pay.Slot $ action $ Pay.SetAccounts accounts
         pure next
-    eval (SetActivePage page next) = do
-        modify (\state -> state{page=page})
-        pure next
-    eval (SetAccounts accounts next) = do
+    eval (SetActivePage Accounts next) = do
+        ForeignAccounts accounts <- fromAff getAccounts
+        modify _{accounts=accounts, page=Accounts}
         query' pathAccounts Accounts.Slot $ action $ Accounts.SetAccounts accounts
         pure next
 
@@ -126,5 +112,4 @@ main :: Eff (AppEffects ()) Unit
 main = runHalogenAff do
     body <- awaitBody
     driver <- runUI ui (parentState initialState) body
-    ForeignAccounts accounts <- getAccounts
-    driver $ left $ action $ SetAccounts accounts
+    driver $ left $ action $ SetActivePage Accounts
