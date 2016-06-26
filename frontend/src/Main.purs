@@ -4,8 +4,11 @@ import Prelude
 
 import Control.Monad.Aff (Aff)
 import Control.Monad.Eff (Eff())
+import Control.Monad.Eff.Exception as Exc
+import Control.Monad.Aff.Console (print)
+import Control.Monad.Except (Except, except, withExcept, catchError, runExcept)
 import Data.Array (zipWith)
-import Data.Either (Either(..), either)
+import Data.Either (Either(..))
 import Data.Foreign (Foreign, ForeignError(..))
 import Data.Foreign.Class (IsForeign, readProp, readJSON)
 import Data.Foreign.Keys (keys)
@@ -83,16 +86,29 @@ ui = parentComponent {render, eval, peek: Nothing}
         query' pathPay Pay.Slot $ action $ Pay.SetAccounts accounts
         pure next
     eval (SetActivePage Accounts next) = do
-        ForeignAccounts accounts <- fromAff getAccounts
-        modify _{accounts=accounts, page=Accounts}
+        modify _{page=Accounts}
+        accounts <- fromAff $ getAccounts `catchError` (fromEither FromAjax <<< Left)
+        case runExcept accounts of
+            Right (ForeignAccounts accounts) -> modify _{accounts=accounts}
+            Left e -> fromAff $ print e
+        accounts <- gets _.accounts
         query' pathAccounts Accounts.Slot $ action $ Accounts.SetAccounts accounts
         pure next
 
 
-getAccounts :: forall eff. Aff (ajax :: AJAX | eff) ForeignAccounts
+data Error = FromForeign ForeignError | FromAjax Exc.Error
+
+instance showError :: Show Error where
+    show (FromForeign e) = show e
+    show (FromAjax e) = show e
+
+fromEither :: forall a b c f. (Applicative f) => (a -> b) -> Either a c -> f (Except b c)
+fromEither conv e = pure $ withExcept conv $ except e
+
+getAccounts :: forall eff. Aff (ajax :: AJAX | eff) (Except Error ForeignAccounts)
 getAccounts = do
     {response} <- get accountsUrl
-    return $ either (const (ForeignAccounts Map.empty)) (\x->x) $ readJSON response
+    fromEither FromForeign $ readJSON response
 
 toInt :: String -> Either ForeignError Int
 toInt x = maybe (Left $ JSONError "String is not a number") Right (fromString x)

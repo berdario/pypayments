@@ -1,6 +1,7 @@
 module Common where
 
 import Prelude
+import Control.Monad.Eff.Console (CONSOLE)
 import Data.Either (Either(..), either)
 import Data.Foreign.Class (class IsForeign)
 import Data.Foreign.Generic (readGeneric, defaultOptions)
@@ -11,7 +12,7 @@ import Data.Maybe (Maybe(..))
 import Halogen (HalogenEffects)
 import Network.HTTP.Affjax (AJAX)
 
-type AppEffects eff = HalogenEffects (ajax :: AJAX | eff)
+type AppEffects eff = HalogenEffects (ajax :: AJAX, console :: CONSOLE | eff)
 
 type AccountId = Int
 newtype Account = Account {name:: String, email:: String, balance:: Number}
