@@ -32,7 +32,6 @@ import Accounts as Accounts
 
 
 data Page = Accounts | Pay
-derive instance eqPage :: Eq Page -- todo
 
 data Query a
     = SetActivePage Page a

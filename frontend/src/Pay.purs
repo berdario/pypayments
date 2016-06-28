@@ -106,6 +106,5 @@ pay :: forall eff. Transaction -> Aff (ajax :: AJAX | eff) TransactionOutcome
 pay (Transaction {source_id, recipient_id, amount}) = do
     result <- post (payUrl source_id recipient_id amount) unit
     return (result.response :: Unit)
-    -- TODO retry timeout?
     return $ outcome result.status
 

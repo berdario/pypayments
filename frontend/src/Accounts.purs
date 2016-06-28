@@ -14,7 +14,7 @@ import Data.Foreign.Class (readJSON)
 import Halogen
 import Halogen.HTML.Indexed as H
 import Halogen.HTML.Events.Indexed as E
-import Network.HTTP.Affjax (AJAX, get)
+import Network.HTTP.Affjax as HTTP
 
 import Common
 
@@ -70,7 +70,7 @@ accountsComponent = component { render, eval }
 
     eval :: Natural Query (ComponentDSL State Query (Aff (AppEffects eff)))
     eval (ToggleShowTransactions id next) = do
-        {inspectedAccount, accountTransactions} <- gets (\x -> x) -- TODO no compile error over shadowing Halogen.get ?
+        {inspectedAccount, accountTransactions} <- get
         case Just id /= inspectedAccount of
             false -> modify _{inspectedAccount=Nothing}
             true -> do
@@ -81,9 +81,9 @@ accountsComponent = component { render, eval }
         modify _{accounts=accounts}
         pure next
 
-getTransactions :: forall eff a. AccountId -> Aff (ajax :: AJAX | eff) (Maybe (Array Transaction))
+getTransactions :: forall eff a. AccountId -> Aff (ajax :: HTTP.AJAX | eff) (Maybe (Array Transaction))
 getTransactions id = do
-    {response} <- get (transactionsUrl id)
+    {response} <- HTTP.get (transactionsUrl id)
     let foreignTransactions = readJSON response
     -- TODO report ForeignError?
     return $ toMaybe foreignTransactions
