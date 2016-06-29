@@ -5,14 +5,23 @@
     "**/.*",
     "node_modules",
     "bower_components",
-    "output"
+    "output",
+    "test",
+    "tests"
   ],
   "dependencies": {
-    "purescript-halogen": "*",
-    "purescript-affjax": "^0.13.2",
-    "purescript-colors": "^0.4.3",
-    "purescript-foreign-generic": "0",
-    "purescript-halogen-css": "^0.5.0",
-    "purescript-node-url": "0.1"
-  }
+    "purescript-affjax": "^1.1.0",
+    "purescript-foreign-generic": "^1.0.0",
+    "purescript-halogen-css": "^0.6.0"
+  },
+  "devDependencies": {
+    "purescript-psci-support": "^1.0.0"
+  },
+  "homepage": "https://github.com/berdario/pypayments",
+  "authors": [
+    "Dario Bertini <berdario@gmail.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "AGPL"
 }

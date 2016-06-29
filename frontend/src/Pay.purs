@@ -3,8 +3,6 @@ module Pay where
 import Prelude
 
 import Control.Monad.Aff (Aff, later')
-import Control.Monad.Aff.Free (Affable)
-import Control.Monad.Free (Free)
 import Data.Maybe (Maybe(..))
 import Data.Int (fromString)
 import Data.List as List
@@ -13,7 +11,6 @@ import Global (readFloat)
 import CSS.Background (backgroundColor)
 import CSS.Color (red)
 import Halogen
-import Halogen.Query (Action, action)
 import Halogen.HTML.Indexed as H
 import Halogen.HTML.CSS.Indexed (style)
 import Halogen.HTML.Events.Indexed as E
@@ -70,7 +67,7 @@ payComponent = component { render, eval }
         , H.select [E.onValueChange (intInput SetRecipient)] $ List.toUnfoldable (map idOption accounts)
         , H.button [E.onClick  (E.input_ DoPayment)] [H.text "transfer money"]]
 
-    eval :: Natural Query (ComponentDSL State Query (Aff (AppEffects eff)))
+    eval :: forall a. Query a -> (ComponentDSL State Query (Aff (AppEffects eff))) a
     eval (SetSource id next) = do
         Transaction t <- gets _.newTransaction
         modify (_{newTransaction=Transaction t{source_id=id}})
@@ -105,6 +102,6 @@ outcome _ = Fail
 pay :: forall eff. Transaction -> Aff (ajax :: AJAX | eff) TransactionOutcome
 pay (Transaction {source_id, recipient_id, amount}) = do
     result <- post (payUrl source_id recipient_id amount) unit
-    return (result.response :: Unit)
-    return $ outcome result.status
+    pure (result.response :: Unit)
+    pure $ outcome result.status
 

@@ -5,15 +5,14 @@ import Prelude
 import Control.Monad.Aff (Aff)
 import Control.Monad.Eff (Eff())
 import Control.Monad.Eff.Exception as Exc
-import Control.Monad.Aff.Console (print)
+import Control.Monad.Aff.Console (logShow)
 import Control.Monad.Except (Except, except, withExcept, catchError, runExcept)
 import Data.Array (zipWith)
 import Data.Either (Either(..))
 import Data.Foreign (Foreign, ForeignError(..))
-import Data.Foreign.Class (IsForeign, readProp, readJSON)
+import Data.Foreign.Class (class IsForeign, readProp, readJSON)
 import Data.Foreign.Keys (keys)
 import Data.Int (fromString)
-import Data.List (List(..))
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
 import Data.Functor.Coproduct (Coproduct, left)
@@ -29,6 +28,7 @@ import Network.HTTP.Affjax (AJAX, get)
 
 import Common
 import Accounts as Accounts
+import Pay as Pay
 
 
 data Page = Accounts | Pay
@@ -78,7 +78,7 @@ ui = parentComponent {render, eval, peek: Nothing}
               Pay -> H.slot' pathPay Pay.Slot \_ -> {component: Pay.payComponent, initialState: Pay.init}
         ]
 
-    eval :: Natural Query (ParentDSL State ChildState Query ChildQuery (Aff (AppEffects eff)) ChildSlot)
+    eval :: forall a. Query a -> (ParentDSL State ChildState Query ChildQuery (Aff (AppEffects eff)) ChildSlot) a
     eval (SetActivePage Pay next) = do
         modify (\state -> state{page=Pay})
         accounts <- gets $ _.accounts >>> Map.keys
@@ -89,7 +89,7 @@ ui = parentComponent {render, eval, peek: Nothing}
         accounts <- fromAff $ getAccounts `catchError` (fromEither FromAjax <<< Left)
         case runExcept accounts of
             Right (ForeignAccounts accounts) -> modify _{accounts=accounts}
-            Left e -> fromAff $ print e
+            Left e -> fromAff $ logShow e
         accounts <- gets _.accounts
         query' pathAccounts Accounts.Slot $ action $ Accounts.SetAccounts accounts
         pure next

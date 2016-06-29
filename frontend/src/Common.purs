@@ -6,7 +6,7 @@ import Data.Either (Either(..), either)
 import Data.Foreign.Class (class IsForeign)
 import Data.Foreign.Generic (readGeneric, defaultOptions)
 import Data.Foldable (intercalate)
-import Data.Generic (Generic)
+import Data.Generic (class Generic)
 import Data.Maybe (Maybe(..))
 
 import Halogen (HalogenEffects)

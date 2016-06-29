@@ -2,9 +2,8 @@ module Accounts where
 
 import Prelude
 
-import Control.Monad (when)
 import Control.Monad.Aff (Aff)
-import Data.Foldable (intercalate, mconcat)
+import Data.Foldable (fold)
 import Data.Maybe (Maybe(..))
 import Data.Map as Map
 import Data.List (List, toUnfoldable)
@@ -37,13 +36,13 @@ init :: State
 init = {accounts: Map.empty, accountTransactions: Nothing, inspectedAccount: Nothing}
 
 transactionToDiv (Transaction t) = H.div_
-    [H.text (mconcat
+    [H.text (fold
         ["source: ", show t.source_id
         ," recipient: ", show t.recipient_id
         ," amount: ", show t.amount])]
 
 accountToText id {name, email, balance} =
-    H.text (mconcat
+    H.text (fold
         ["id: ", show id
         ," name: ", name
         ," email: ", email
@@ -68,7 +67,7 @@ accountsComponent = component { render, eval }
     render :: State -> ComponentHTML Query
     render {inspectedAccount, accountTransactions, accounts} = H.div_ $ map (accountDataToHtml inspectedAccount accountTransactions) $ toUnfoldable (Map.toList accounts)
 
-    eval :: Natural Query (ComponentDSL State Query (Aff (AppEffects eff)))
+    eval :: forall a. Query a -> (ComponentDSL State Query (Aff (AppEffects eff))) a
     eval (ToggleShowTransactions id next) = do
         {inspectedAccount, accountTransactions} <- get
         case Just id /= inspectedAccount of
@@ -81,10 +80,10 @@ accountsComponent = component { render, eval }
         modify _{accounts=accounts}
         pure next
 
-getTransactions :: forall eff a. AccountId -> Aff (ajax :: HTTP.AJAX | eff) (Maybe (Array Transaction))
+getTransactions :: forall eff. AccountId -> Aff (ajax :: HTTP.AJAX | eff) (Maybe (Array Transaction))
 getTransactions id = do
     {response} <- HTTP.get (transactionsUrl id)
     let foreignTransactions = readJSON response
     -- TODO report ForeignError?
-    return $ toMaybe foreignTransactions
+    pure $ toMaybe foreignTransactions
 
