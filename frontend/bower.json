@@ -12,7 +12,7 @@
   "dependencies": {
     "purescript-affjax": "^1.1.0",
     "purescript-foreign-generic": "^1.0.0",
-    "purescript-halogen-css": "^0.6.0"
+    "purescript-halogen-css": "^1.0.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^1.0.0"
