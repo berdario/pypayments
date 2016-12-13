@@ -3,7 +3,7 @@ module View exposing (..)
 import Dict exposing (Dict)
 import Html exposing (Html, body, nav, ul, li, text)
 import Html.Events exposing (onClick)
-import Html.App exposing (map)
+import Html
 
 import Model exposing (..)
 import AccountsPage.View as Accounts
@@ -13,8 +13,8 @@ view : Model -> Html Action
 view model = body []
     [navbar model
     ,case model.currentPage of
-        Accounts -> map AccountsAction (Accounts.view model.accounts)
-        Pay ->  map PaymentAction (Payment.view model.payment (Dict.keys model.accounts.accounts))]
+        Accounts -> Html.map AccountsAction (Accounts.view model.accounts)
+        Pay -> Html.map PaymentAction (Payment.view model.payment (Dict.keys model.accounts.accounts))]
 
 
 navbar : Model -> Html Action

@@ -10,7 +10,7 @@ import PaymentPage.Api exposing (pay)
 
 delayedClear : Cmd Payment.Action
 delayedClear =
-    (Process.sleep 3000) |> Task.perform identity (\_ -> ClearLastTransactionOutcome)
+    (Process.sleep 3000) |> Task.perform (\_ -> ClearLastTransactionOutcome)
 
 update : Action -> Model -> (Model, Cmd Payment.Action)
 update action model =

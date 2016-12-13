@@ -2,14 +2,12 @@ module AccountsPage.Api exposing (..)
 
 import Dict exposing (Dict)
 import Http
-import Json.Decode as Json exposing ((:=))
+import Json.Decode as Json exposing (field)
 import String
 import Task
 
 import AccountsPage.Model exposing (..)
 import Common exposing (..)
-
-
 
 keyToInt : (String, a) -> Result String (Int, a)
 keyToInt (s, x) = case String.toInt s of
@@ -26,33 +24,31 @@ kvPairsToIntDict : List (String, a) -> Result String (Dict Int a)
 kvPairsToIntDict xs = Result.map Dict.fromList (resultSequence (List.map keyToInt xs))
 
 intDict : Json.Decoder a -> Json.Decoder (Dict Int a)
-intDict x = Json.customDecoder (Json.keyValuePairs x) kvPairsToIntDict
+intDict x = customDecoder (Json.keyValuePairs x) kvPairsToIntDict
 
 decodeAccounts : Json.Decoder (Dict AccountId Account)
 decodeAccounts = intDict decodeAccount
 
 decodeAccount : Json.Decoder Account
-decodeAccount = Json.object3 Account
-    ("name" := Json.string )
-    ("email" := Json.string )
-    ("balance" := Json.float )
+decodeAccount = Json.map3 Account
+    (field "name" Json.string )
+    (field "email" Json.string )
+    (field "balance" Json.float )
 
 decodeTransaction : Json.Decoder Transaction
-decodeTransaction = Json.object3 Transaction
-    ("source_id" := Json.int )
-    ("recipient_id" := Json.int )
-    ("amount" := Json.float )
+decodeTransaction = Json.map3 Transaction
+    (field "source_id" Json.int )
+    (field "recipient_id" Json.int )
+    (field "amount" Json.float )
 
 decodeTransactions : Json.Decoder (List Transaction)
 decodeTransactions = Json.list decodeTransaction
 
 
-accounts = Http.get decodeAccounts accountsUrl
-    |> Task.toMaybe
-    |> Task.perform identity FetchedAccounts
+accounts = Http.get accountsUrl decodeAccounts
+    |> Http.send (FetchedAccounts << Result.toMaybe)
 
 
 accountTransactions account_id =
-    Http.get decodeTransactions (transactionsUrl account_id)
-    |> Task.toMaybe
-    |> Task.perform identity FetchedTransactions
+    Http.get (transactionsUrl account_id) decodeTransactions
+    |> Http.send (FetchedTransactions << Result.toMaybe)

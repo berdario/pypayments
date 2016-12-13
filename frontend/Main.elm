@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Platform.Cmd as Cmd exposing (Cmd)
 import Platform.Sub as Sub
-import Html.App as Html
+import Html
 
 import Model exposing (..)
 import View exposing (view)

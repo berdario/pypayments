@@ -3,7 +3,6 @@ module AccountsPage.View exposing (..)
 import Dict exposing (Dict)
 import Html as Html exposing (Html, div, ul, li, text)
 import Html.Events exposing (onClick)
-import Html.App as Html
 import String
 
 import AccountsPage.Model exposing (..)
@@ -22,7 +21,7 @@ accountToText id {name, email, balance} =
         ," email: ", email
         ," balance: ", toString balance])
 
-transactionDetail : List Transaction -> Html a
+transactionDetail : List Transaction -> Html Never
 transactionDetail trans = div [] (List.map transactionToDiv trans)
 
 accountDiv id = div [onClick (ToggleShowTransactions id)]
@@ -31,7 +30,7 @@ accountDataToHtml : Maybe AccountId -> Maybe (List Transaction) -> (AccountId, A
 accountDataToHtml mAccount mTransactions (id, acct) =
     let accountText = accountToText id acct
     in case (mAccount == Just id, mTransactions) of
-    (True, Just trans) -> accountDiv id [accountText, transactionDetail trans]
+    (True, Just trans) -> accountDiv id [Html.map never accountText, Html.map never (transactionDetail trans)]
     _ -> accountDiv id [accountText]
 
 
