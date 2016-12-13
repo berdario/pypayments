@@ -1,4 +1,4 @@
-module Model where
+module Model exposing (..)
 
 import Common exposing (..)
 import AccountsPage.Model as Accounts exposing (..)

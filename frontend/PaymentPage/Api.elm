@@ -1,6 +1,5 @@
-module PaymentPage.Api where
+module PaymentPage.Api exposing (..)
 
-import Effects exposing (Effects)
 import Http
 import Json.Decode as Json
 import Task
@@ -11,6 +10,5 @@ import PaymentPage.Model exposing (..)
 
 pay {source, recipient, amount} =
     Http.post Json.value (payUrl source recipient amount) Http.empty
-    |> Task.map (\_ -> LastTransactionOutcome Success)
-    |> flip Task.onError (\_ -> Task.succeed (LastTransactionOutcome Fail))
-    |> Effects.task
+    |> Task.perform (\_ -> Fail) (\_ -> Success)
+    |> Cmd.map LastTransactionOutcome

@@ -1,4 +1,4 @@
-module AccountsPage.Model where
+module AccountsPage.Model exposing (..)
 
 import Dict exposing (Dict)
 
@@ -11,11 +11,11 @@ type alias Model =
     , accountTransactions : Maybe (List Transaction)
     , inspectedAccount : Maybe AccountId
     }
-    
+
 type Action
     = ToggleShowTransactions AccountId
     | FetchedAccounts (Maybe (Dict AccountId Account))
     | FetchedTransactions (Maybe (List Transaction))
-    
+
 init : Model
 init = Model Dict.empty Nothing Nothing

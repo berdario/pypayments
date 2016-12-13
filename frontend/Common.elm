@@ -1,4 +1,4 @@
-module Common where
+module Common exposing (..)
 
 import Http
 
@@ -6,7 +6,7 @@ type alias AccountId = Int
 type alias Transaction = {source: AccountId, recipient: AccountId, amount: Float}
 
 
-baseUrl = "http://localhost:8000" 
+baseUrl = "http://localhost:8000"
 
 accountsUrl = Http.url (baseUrl ++ "/accounts") []
 

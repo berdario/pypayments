@@ -1,8 +1,8 @@
-module Main where
+module Main exposing (..)
 
-import Effects exposing (Effects, Never)
-import StartApp
-import Task
+import Platform.Cmd as Cmd exposing (Cmd)
+import Platform.Sub as Sub
+import Html.App as Html
 
 import Model exposing (..)
 import View exposing (view)
@@ -14,26 +14,15 @@ import AccountsPage.Api exposing (accounts)
 
 
 app =
-  StartApp.start
+  Html.program
     { init = init
     , update = update
     , view = view
-    , inputs = []
+    , subscriptions = \_ -> Sub.none
     }
 
 
-init : (Model, Effects Action)
+init : (Model, Cmd Action)
 init =
   ( Model Accounts Payment.init Accounts.init
-  , Effects.map AccountsAction accounts)
-
-
-main =
-  app.html
-
-
-port tasks : Signal (Task.Task Never ())
-port tasks =
-  app.tasks
-
-
+  , Cmd.map AccountsAction accounts)

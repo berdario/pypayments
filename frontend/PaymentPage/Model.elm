@@ -1,4 +1,4 @@
-module PaymentPage.Model where
+module PaymentPage.Model exposing (..)
 
 import Common exposing (..)
 
@@ -16,6 +16,6 @@ type Action
     | DoPayment
     | LastTransactionOutcome TransactionOutcome
     | ClearLastTransactionOutcome
-    
+
 init : Model
-init = Model {source=1, recipient=1, amount=0} Nothing 
+init = Model {source=1, recipient=1, amount=0} Nothing

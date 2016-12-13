@@ -1,28 +1,28 @@
-module PaymentPage.Update where
+module PaymentPage.Update exposing (..)
 
-import Effects exposing (Effects)
+import Platform.Cmd as Cmd exposing (Cmd)
 import Task
+import Process
 
 import PaymentPage.Model as Payment exposing (..)
 import PaymentPage.Api exposing (pay)
 
 
-delayedClear : Effects Payment.Action
+delayedClear : Cmd Payment.Action
 delayedClear =
-    Task.sleep 3000 `Task.andThen` (\_ -> Task.succeed ClearLastTransactionOutcome)
-    |> Effects.task
+    (Process.sleep 3000) |> Task.perform identity (\_ -> ClearLastTransactionOutcome)
 
-update : Action -> Model -> (Model, Effects Payment.Action)
+update : Action -> Model -> (Model, Cmd Payment.Action)
 update action model =
   case action of
     (SetSource id) -> let trans = model.newTransaction
-                      in ({model | newTransaction={trans|source=id}}, Effects.none)
+                      in ({model | newTransaction={trans|source=id}}, Cmd.none)
     (SetRecipient id) -> let trans = model.newTransaction
-                         in ({model | newTransaction={trans|recipient=id}}, Effects.none)
+                         in ({model | newTransaction={trans|recipient=id}}, Cmd.none)
     (SetAmount amount) -> let trans = model.newTransaction
-                          in ({model | newTransaction={trans|amount=amount}}, Effects.none)
+                          in ({model | newTransaction={trans|amount=amount}}, Cmd.none)
     DoPayment -> (model, pay model.newTransaction)
     (LastTransactionOutcome outcome) -> ({model| lastTransaction=Just outcome}, delayedClear)
-    ClearLastTransactionOutcome -> ({model| lastTransaction=Nothing}, Effects.none)
+    ClearLastTransactionOutcome -> ({model| lastTransaction=Nothing}, Cmd.none)
 
 

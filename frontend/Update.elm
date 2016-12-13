@@ -1,6 +1,6 @@
-module Update where
+module Update exposing (..)
 
-import Effects exposing (Effects)
+import Platform.Cmd as Cmd exposing (Cmd)
 import Task
 
 import Model exposing (..)
@@ -11,22 +11,22 @@ import PaymentPage.Update as Payment
 
 import PaymentPage.Model
 
-    
-updatePage : Page -> Model -> (Model, Effects Action)
+
+updatePage : Page -> Model -> (Model, Cmd Action)
 updatePage page model = if model.currentPage == page
-    then (model, Effects.none)
+    then (model, Cmd.none)
     else case page of
         Accounts -> ( {model | currentPage=page}
-                    , (Effects.map AccountsAction accounts))
+                    , (Cmd.map AccountsAction accounts))
         Pay -> ( {model | currentPage=page, payment=PaymentPage.Model.init}
-               , Effects.none)
+               , Cmd.none)
 
-update : Action -> Model -> (Model, Effects Action)
+update : Action -> Model -> (Model, Cmd Action)
 update action model =
   case action of
     (SetActivePage page) -> updatePage page model
     (AccountsAction action) -> let (acctsModel, fx) = Accounts.update action model.accounts
-                               in ({model | accounts=acctsModel}, Effects.map AccountsAction fx)
+                               in ({model | accounts=acctsModel}, Cmd.map AccountsAction fx)
     (PaymentAction action) -> let (paymentModel, fx) = Payment.update action model.payment
-                              in ({model | payment=paymentModel}, Effects.map PaymentAction fx)
-    
+                              in ({model | payment=paymentModel}, Cmd.map PaymentAction fx)
+

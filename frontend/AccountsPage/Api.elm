@@ -1,7 +1,6 @@
-module AccountsPage.Api where
+module AccountsPage.Api exposing (..)
 
 import Dict exposing (Dict)
-import Effects exposing (Effects)
 import Http
 import Json.Decode as Json exposing ((:=))
 import String
@@ -21,7 +20,7 @@ resultSequence : List (Result x a) -> Result x (List a)
 resultSequence xs = case xs of
     [] -> Ok []
     result :: rest -> Result.map2 (::) result (resultSequence rest)
-    
+
 
 kvPairsToIntDict : List (String, a) -> Result String (Dict Int a)
 kvPairsToIntDict xs = Result.map Dict.fromList (resultSequence (List.map keyToInt xs))
@@ -37,25 +36,23 @@ decodeAccount = Json.object3 Account
     ("name" := Json.string )
     ("email" := Json.string )
     ("balance" := Json.float )
-    
+
 decodeTransaction : Json.Decoder Transaction
 decodeTransaction = Json.object3 Transaction
     ("source_id" := Json.int )
     ("recipient_id" := Json.int )
     ("amount" := Json.float )
-    
+
 decodeTransactions : Json.Decoder (List Transaction)
 decodeTransactions = Json.list decodeTransaction
 
-    
+
 accounts = Http.get decodeAccounts accountsUrl
     |> Task.toMaybe
-    |> Task.map FetchedAccounts
-    |> Effects.task
+    |> Task.perform identity FetchedAccounts
 
 
 accountTransactions account_id =
     Http.get decodeTransactions (transactionsUrl account_id)
     |> Task.toMaybe
-    |> Task.map FetchedTransactions
-    |> Effects.task
+    |> Task.perform identity FetchedTransactions

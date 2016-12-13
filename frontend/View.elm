@@ -1,23 +1,24 @@
-module View where
+module View exposing (..)
 
 import Dict exposing (Dict)
 import Html exposing (Html, body, nav, ul, li, text)
 import Html.Events exposing (onClick)
+import Html.App exposing (map)
 
 import Model exposing (..)
 import AccountsPage.View as Accounts
 import PaymentPage.View as Payment
 
-view : Signal.Address Action -> Model -> Html
-view address model = body []
-    [navbar address model
+view : Model -> Html Action
+view model = body []
+    [navbar model
     ,case model.currentPage of
-        Accounts -> Accounts.view (Signal.forwardTo address AccountsAction) model.accounts
-        Pay -> Payment.view (Signal.forwardTo address PaymentAction) model.payment (Dict.keys model.accounts.accounts)]
-    
+        Accounts -> map AccountsAction (Accounts.view model.accounts)
+        Pay ->  map PaymentAction (Payment.view model.payment (Dict.keys model.accounts.accounts))]
 
-navbar : Signal.Address Action -> Model -> Html
-navbar address model = nav []
+
+navbar : Model -> Html Action
+navbar model = nav []
     [ul []
-        [li [onClick address (SetActivePage Accounts)] [text "Transactions"]
-        ,li [onClick address (SetActivePage Pay)] [text "Make a payment"]]]
+        [li [onClick (SetActivePage Accounts)] [text "Transactions"]
+        ,li [onClick (SetActivePage Pay)] [text "Make a payment"]]]
